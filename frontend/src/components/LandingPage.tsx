@@ -154,9 +154,9 @@ const reviews = [
 interface ParallaxSectionProps {
   children: React.ReactNode;
   className?: string;
-  index: number;
+  index?: number;
   zIndex?: number;
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 const ParallaxSection: React.FC<ParallaxSectionProps> = ({ 
@@ -190,6 +190,15 @@ const ParallaxSection: React.FC<ParallaxSectionProps> = ({
         className="absolute inset-0 pointer-events-none overflow-hidden"
         style={{ y: bgY }}
       >
+        {/* Grid Layer with Edge Fading */}
+        <div className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundSize: '40px 40px',
+            backgroundImage: 'linear-gradient(to right, #64748b 0.5px, transparent 0.5px), linear-gradient(to bottom, #648b70ff 0.5px, transparent 0.5px)',
+            maskImage: 'radial-gradient(circle at center, black 30%, transparent 80%)',
+            WebkitMaskImage: 'radial-gradient(circle at center, black 30%, transparent 80%)'
+          }}
+        />
         <div className="absolute -right-20 top-1/4 w-96 h-96 bg-purple-100 rounded-full blur-3xl opacity-30" />
         <div className="absolute -left-20 bottom-1/4 w-72 h-72 bg-slate-100 rounded-full blur-3xl opacity-40" />
       </motion.div>
@@ -307,11 +316,13 @@ const LandingPage: React.FC = () => {
         }}
         className="sticky top-0 h-screen w-full overflow-hidden z-[20] bg-slate-50 snap-start"
       >
-        <div className="absolute inset-0 z-0 opacity-[0.03]"
+        <div className="absolute inset-0 z-0 opacity-[0.05]"
           style={{
             backgroundSize: '30px 30px',
-            backgroundImage: `linear-gradient(to right, #64748b 1px, transparent 1px),
-                             linear-gradient(to bottom, #64748b 1px, transparent 1px)`,
+            backgroundImage: `linear-gradient(to right, #64748b 0.5px, transparent 0.5px),
+                             linear-gradient(to bottom, #64748b 0.5px, transparent 0.5px)`,
+            maskImage: 'radial-gradient(circle at 50% 50%, black 20%, transparent 90%)',
+            WebkitMaskImage: 'radial-gradient(circle at 50% 50%, black 20%, transparent 90%)'
           }}
         />
 
@@ -392,7 +403,7 @@ const LandingPage: React.FC = () => {
         </motion.div>
       </motion.div>
 
-      <div id="section-about" className="relative bg-white snap-start z-[30]">
+      <div id="section-about" className="relative bg-white/70 backdrop-blur-sm snap-start z-[30]">
         <ParallaxSection zIndex={30} className="py-32" containerRef={containerRef}>
           <div className="max-w-6xl mx-auto px-4 md:px-8">
             <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -435,7 +446,7 @@ const LandingPage: React.FC = () => {
         </ParallaxSection>
       </div>
 
-      <div id="section-features" className="relative bg-slate-50 snap-start z-[35]">
+      <div id="section-features" className="relative bg-slate-50/70 backdrop-blur-sm snap-start z-[35]">
         <ParallaxSection zIndex={35} className="py-32" containerRef={containerRef}>
           <div className="max-w-6xl mx-auto px-4 md:px-8">
             <div className="text-center mb-16">
@@ -466,7 +477,7 @@ const LandingPage: React.FC = () => {
         </ParallaxSection>
       </div>
 
-      <div id="section-workflow" className="relative bg-white snap-start z-[40]">
+      <div id="section-workflow" className="relative bg-white/70 backdrop-blur-sm snap-start z-[40]">
         <ParallaxSection zIndex={40} className="py-32" containerRef={containerRef}>
           <div className="max-w-6xl mx-auto px-4 md:px-8">
             <div className="text-center mb-16">
@@ -505,7 +516,7 @@ const LandingPage: React.FC = () => {
         </ParallaxSection>
       </div>
 
-      <div className="relative bg-gradient-to-br from-slate-50 to-purple-50/30 snap-start z-[45]">
+      <div className="relative bg-gradient-to-br from-slate-50/60 to-purple-50/20 backdrop-blur-sm snap-start z-[45]">
         <ParallaxSection zIndex={45} className="py-32" containerRef={containerRef}>
           <div className="max-w-6xl mx-auto px-4 md:px-8">
             <div className="text-center mb-16">
