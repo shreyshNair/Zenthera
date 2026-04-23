@@ -1,28 +1,73 @@
 @import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-@theme {
+:root {
   --color-brand-orange: #F15A24;
   --color-brand-orange-light: #FF7A45;
   --color-brand-orange-dark: #D94A18;
   --color-brand-primary: #F15A24;
-  --color-brand-dark: #1A1A2E;
-  --color-brand-gray: #64748b;
-  --color-surface-glass: rgba(255,255,255,0.08);
+  
   --font-serif: 'Playfair Display', Georgia, serif;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
-  /* Dark Mode specific colors */
-  --color-dark-bg: #0A0A0F;
-  --color-dark-surface: #12121A;
-  --color-dark-border: #1E1E2D;
-  --color-dark-text: #E2E8F0;
-  --color-dark-muted: #94A3B8;
+  /* Light Theme Defaults */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border-color: #e2e8f0;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(241, 90, 36, 0.1);
+  --card-bg: #ffffff;
+  --nav-bg: rgba(255, 255, 255, 0.8);
+  --status-resistant: #dc2626;
+  --status-susceptible: #16a34a;
+}
+
+[data-theme='dark'] {
+  --bg-primary: #0A0A0F;
+  --bg-secondary: #12121A;
+  --bg-tertiary: #1E1E2D;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+  --border-color: #1E1E2D;
+  --glass-bg: rgba(10, 10, 15, 0.7);
+  --glass-border: rgba(241, 90, 36, 0.2);
+  --card-bg: #12121A;
+  --nav-bg: rgba(10, 10, 15, 0.8);
+  --status-resistant: #ef4444;
+  --status-susceptible: #22c55e;
+}
+
+@theme {
+  --color-brand-orange: var(--color-brand-orange);
+  --color-brand-orange-light: var(--color-brand-orange-light);
+  --color-brand-orange-dark: var(--color-brand-orange-dark);
+  --color-brand-primary: var(--color-brand-primary);
+  
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-border-main: var(--border-color);
+  --color-status-resistant: var(--status-resistant);
+  --color-status-susceptible: var(--status-susceptible);
+  --color-nav-bg: var(--nav-bg);
+  --color-glass-bg: var(--glass-bg);
+  --color-glass-border: var(--glass-border);
+  
+  --font-serif: var(--font-serif);
+  --font-sans: var(--font-sans);
 }
 
 @layer base {
   body {
-    @apply bg-white text-slate-900 overflow-x-hidden;
+    @apply bg-bg-primary text-text-primary transition-colors duration-300 overflow-x-hidden;
     font-family: var(--font-sans);
   }
 }

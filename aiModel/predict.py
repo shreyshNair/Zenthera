@@ -483,7 +483,11 @@ class ZentheraPipeline:
         self._kmer_width = sum(
             len(v.vocabulary_) for v in self.vectorizers.values()
         )
-        log.info(f"Models loaded. K-mer feature width: {self._kmer_width}")
+        
+        # CRITICAL: Detect how many antibiotic features the model expects
+        # This prevents the 'same confidence' bug when drug lists are expanded
+        self._expected_ab_count = self.rf.n_features_in_ - self._kmer_width
+        log.info(f"Models loaded. K-mer width: {self._kmer_width}, Expected drugs: {self._expected_ab_count}")
 
         # Load CARD resistance gene scanner (optional)
         self.gene_scanner = None
@@ -526,18 +530,22 @@ class ZentheraPipeline:
         """Build the full feature vector for one sample."""
         if X_kmer is None:
             X_kmer = build_kmer_vector(text_or_seq, self.vectorizers, is_dna)
-        X_meta = build_metadata_vector(antibiotic, genus, self.meta_config, gc_pct, seq_length)
+        
+        # Build metadata vector matching the model's training dimensions
+        # ab_vec = np.zeros(len(INDIA_ANTIBIOTICS), dtype=np.float32)
+        ab_vec = np.zeros(self._expected_ab_count, dtype=np.float32)
+        ab_lower = antibiotic.lower().strip()
+        
+        # Map to the drug index (only if it's within the model's trained range)
+        if ab_lower in INDIA_ANTIBIOTICS:
+            idx = INDIA_ANTIBIOTICS.index(ab_lower)
+            if idx < self._expected_ab_count:
+                ab_vec[idx] = 1.0
 
-        # X_meta already has the correct number of columns now!
-        # Training columns: kmer_cols + ab(15) + genus(N) + taxon(1) + gc(1) + seqlen(1)
-        # build_metadata_vector returns exactly [ab, gen, taxon, gc, seqlen]
-        X_meta_sparse = csr_matrix(X_meta.reshape(1, -1))
+        X_meta_sparse = csr_matrix(ab_vec.reshape(1, -1))
         
         # Ensure final feature width matches model exactly
         X = hstack([X_kmer, X_meta_sparse])
-        if X.shape[1] != self.rf.n_features_in_:
-            log.warning(f"Feature width mismatch: {X.shape[1]} vs model {self.rf.n_features_in_}")
-        
         return X
 
     def _predict_one(
@@ -643,7 +651,7 @@ class ZentheraPipeline:
             res_idx = 0
 
         max_res_probs_rf = {ab: 0.0 for ab in drugs}
-        max_res_probs_lr = {ab: 0.0 for ab in drugs}
+        max_res_probs_lr = {ab: 0.5 for ab in drugs} # Initialize to neutral
 
         from scipy.sparse import vstack
 
@@ -662,7 +670,7 @@ class ZentheraPipeline:
         if X_all:
             try:
                 X_batch = vstack(X_all)
-                # Only run ML if dimensions match (avoids crash during drug-panel expansion)
+                # Only run ML if dimensions match (should now always match due to _featurise fix)
                 if X_batch.shape[1] == self.rf.n_features_in_:
                     probs_rf_batch = self.rf.predict_proba(X_batch)[:, res_idx]
                     probs_lr_batch = self.lr.predict_proba(X_batch)[:, res_idx]
@@ -674,14 +682,17 @@ class ZentheraPipeline:
                         max_res_probs_lr[ab] = max(max_res_probs_lr.get(ab, 0), prob_lr)
                 else:
                     log.warning(f"ML Model width mismatch: {X_batch.shape[1]} vs {self.rf.n_features_in_}. Skipping ML fallback.")
+                    # If mismatch persists, we mark as inconclusive rather than 100% susceptible
+                    max_res_probs_rf = {ab: 0.5 for ab in drugs}
             except Exception as e:
                 log.warning(f"ML Inference failed: {e}")
+                max_res_probs_rf = {ab: 0.5 for ab in drugs}
 
         # 3. Final Integration
         results = []
         for ab in drugs:
-            prob_rf = max_res_probs_rf.get(ab, 0.0)
-            prob_lr = max_res_probs_lr.get(ab, 0.0)
+            prob_rf = max_res_probs_rf.get(ab, 0.5)
+            prob_lr = max_res_probs_lr.get(ab, 0.5)
 
             # Check if deterministic layer found resistance
             det_found = ab in hits
@@ -692,11 +703,9 @@ class ZentheraPipeline:
             if det_found:
                 phenotype = "Resistant"
                 best_val = max(g["val"] for g in det_items)
-                # Deterministic: Very high confidence, but capped at 99.5% for realism
                 confidence = min(0.995, max(0.96, best_val))
             elif prob_rf >= 0.65:
                 phenotype = "Resistant"
-                # ML: Cap at 98.5% to reflect that no model is 100% perfect
                 confidence = min(0.985, prob_rf)
             elif prob_rf <= 0.35:
                 phenotype = "Susceptible"
@@ -704,7 +713,7 @@ class ZentheraPipeline:
             else:
                 phenotype = "Insufficient Data"
                 confidence = prob_rf if prob_rf >= 0.5 else 1.0 - prob_rf
-                confidence = min(0.94, confidence) # Lower cap for uncertain range
+                confidence = min(0.94, confidence)
 
             res = {
                 "antibiotic": ab.lower().strip(),

@@ -43,11 +43,11 @@ const HowItWorks: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-brand-orange/20 selection:text-brand-orange">
+    <div className="min-h-screen bg-bg-primary font-sans text-text-primary selection:bg-brand-orange/20 selection:text-brand-orange transition-colors duration-300">
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative pt-40 pb-20 overflow-hidden bg-white">
+      <section className="relative pt-40 pb-20 overflow-hidden bg-bg-primary border-b border-border-main">
         {/* Background Gradients */}
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-brand-orange/[0.04] rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute top-[20%] left-[-10%] w-[400px] h-[400px] bg-brand-orange/[0.03] rounded-full blur-[100px] pointer-events-none" />
@@ -70,12 +70,12 @@ const HowItWorks: React.FC = () => {
             </div>
           </Reveal>
           <Reveal delay={0.1}>
-            <h1 className="font-display text-5xl md:text-7xl font-bold mb-6 tracking-tight text-slate-900">
+            <h1 className="font-display text-5xl md:text-7xl font-bold mb-6 tracking-tight text-text-primary">
               How <span className="text-brand-orange">Zenthera</span> works
             </h1>
           </Reveal>
           <Reveal delay={0.2}>
-            <p className="text-xl text-slate-500 font-light leading-relaxed max-w-2xl mx-auto">
+            <p className="text-xl text-text-secondary font-light leading-relaxed max-w-2xl mx-auto">
               We translate raw genomic sequences into life-saving clinical insights in minutes. Explore the technology powering the next generation of diagnostics.
             </p>
           </Reveal>
@@ -83,9 +83,9 @@ const HowItWorks: React.FC = () => {
       </section>
 
       {/* Steps Section */}
-      <section className="relative py-24 bg-slate-50 overflow-hidden">
+      <section className="relative py-24 bg-bg-secondary overflow-hidden">
         {/* Orbs */}
-        <div className="absolute top-[30%] left-[15%] w-[300px] h-[300px] bg-orange-200/30 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-[30%] left-[15%] w-[300px] h-[300px] bg-orange-200/20 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute bottom-[20%] right-[10%] w-[400px] h-[400px] bg-brand-orange/[0.05] rounded-full blur-[100px] pointer-events-none" />
 
         <div className="relative z-10 max-w-5xl mx-auto px-6 md:px-12">
@@ -97,32 +97,32 @@ const HowItWorks: React.FC = () => {
                   {/* Text Content */}
                   <div className="flex-1 space-y-6">
                     <div className="flex items-center gap-4">
-                      <span className="text-4xl md:text-6xl font-display font-black text-slate-200">{step.num}</span>
-                      <div className="h-px bg-slate-200 flex-1" />
+                      <span className="text-4xl md:text-6xl font-display font-black text-text-muted/20">{step.num}</span>
+                      <div className="h-px bg-border-main flex-1" />
                     </div>
-                    <h2 className="text-3xl md:text-4xl font-bold text-slate-900">{step.title}</h2>
-                    <p className="text-lg text-slate-500 font-light leading-relaxed">
+                    <h2 className="text-3xl md:text-4xl font-bold text-text-primary">{step.title}</h2>
+                    <p className="text-lg text-text-secondary font-light leading-relaxed">
                       {step.desc}
                     </p>
                   </div>
 
                   {/* Graphic / Visual representation */}
                   <div className="flex-1 w-full">
-                    <div className="relative aspect-square md:aspect-[4/3] rounded-3xl bg-white border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden group">
+                    <div className="relative aspect-square md:aspect-[4/3] rounded-3xl bg-bg-primary border border-border-main shadow-xl shadow-black/5 overflow-hidden group">
                       <div className="absolute inset-0 bg-gradient-to-br from-brand-orange/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                       
-                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-orange-50 rounded-2xl border border-orange-100 flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 shadow-lg shadow-orange-100/50">
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-brand-orange/5 rounded-2xl border border-brand-orange/10 flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 shadow-lg shadow-brand-orange/5">
                         {step.icon}
                       </div>
 
                       {/* Decorative elements based on step */}
                       {index === 0 && (
                         <div className="absolute inset-0 pointer-events-none p-6">
-                          <div className="w-full h-full border border-dashed border-slate-200 rounded-xl" />
+                          <div className="w-full h-full border border-dashed border-border-main rounded-xl" />
                         </div>
                       )}
                       {index === 1 && (
-                        <div className="absolute inset-0 pointer-events-none flex items-center justify-between px-12 opacity-20">
+                        <div className="absolute inset-0 pointer-events-none flex items-center justify-between px-12 opacity-20 text-text-muted">
                           <span className="font-mono text-xl">ATCG</span>
                           <span className="font-mono text-xl">GCTA</span>
                         </div>
@@ -138,12 +138,12 @@ const HowItWorks: React.FC = () => {
       </section>
 
       {/* CTA Footer */}
-      <section className="relative py-32 bg-brand-dark text-white text-center overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-orange/20 rounded-full blur-[150px] pointer-events-none" />
+      <section className="relative py-32 bg-bg-primary border-t border-border-main text-center overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-orange/[0.08] rounded-full blur-[150px] pointer-events-none" />
         <div className="relative z-10 max-w-3xl mx-auto px-6">
           <Reveal>
-            <h2 className="font-display text-4xl md:text-5xl font-bold mb-6">Ready to accelerate your analysis?</h2>
-            <p className="text-slate-400 text-lg mb-10">Join leading clinical labs using Zenthera to decode resistance in minutes.</p>
+            <h2 className="font-display text-4xl md:text-5xl font-bold mb-6 text-text-primary">Ready to accelerate your analysis?</h2>
+            <p className="text-text-secondary text-lg mb-10">Join leading clinical labs using Zenthera to decode resistance in minutes.</p>
             <a href="/dashboard" className="inline-flex items-center gap-2 px-8 py-4 bg-brand-orange text-white rounded-full font-bold hover:bg-[#d64e1f] transition-all transform hover:-translate-y-1 shadow-lg shadow-brand-orange/25">
               Launch Dashboard <ChevronRight className="w-5 h-5" />
             </a>

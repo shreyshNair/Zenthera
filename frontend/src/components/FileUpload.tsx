@@ -41,29 +41,29 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing }) =
       <div
         {...getRootProps()}
         className={`relative group cursor-pointer transition-all duration-500 border-2 border-dashed rounded-[2.5rem] p-16 text-center
-          ${isDragActive ? 'border-brand-orange bg-brand-orange/5 scale-[1.01]' : 'border-slate-200 bg-slate-50/50 hover:border-brand-orange/50 hover:bg-slate-50'}
+          ${isDragActive ? 'border-brand-orange bg-brand-orange/5 scale-[1.01]' : 'border-border-main bg-bg-secondary/50 hover:border-brand-orange/50 hover:bg-bg-secondary'}
           ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}
         `}
       >
         <input {...getInputProps()} />
         
         <div className="flex flex-col items-center">
-          <div className="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mb-8 group-hover:rotate-6 transition-transform">
-            <Upload className={`w-8 h-8 transition-colors ${isDragActive ? 'text-brand-orange' : 'text-slate-400'}`} />
+          <div className="w-20 h-20 bg-bg-primary rounded-3xl shadow-xl shadow-black/5 flex items-center justify-center mb-8 group-hover:rotate-6 transition-transform">
+            <Upload className={`w-8 h-8 transition-colors ${isDragActive ? 'text-brand-orange' : 'text-text-muted'}`} />
           </div>
-          <h3 className="text-3xl font-serif italic text-slate-900 mb-4">
+          <h3 className="text-3xl font-serif italic text-text-primary mb-4">
             {isDragActive ? 'Drop sequence here' : 'Genomic Data Ingest'}
           </h3>
-          <p className="text-slate-500 text-sm max-w-xs mx-auto leading-relaxed">
+          <p className="text-text-secondary text-sm max-w-xs mx-auto leading-relaxed">
             Drag and drop your <span className="font-mono font-bold text-brand-orange">.fasta</span> or <span className="font-mono font-bold text-brand-orange">.fna</span> sequences here
           </p>
         </div>
 
         {/* Decorative corner accents */}
-        <div className="absolute top-8 left-8 w-6 h-6 border-t-2 border-l-2 border-slate-100 group-hover:border-brand-orange/30 rounded-tl-xl transition-colors" />
-        <div className="absolute top-8 right-8 w-6 h-6 border-t-2 border-r-2 border-slate-100 group-hover:border-brand-orange/30 rounded-tr-xl transition-colors" />
-        <div className="absolute bottom-8 left-8 w-6 h-6 border-b-2 border-l-2 border-slate-100 group-hover:border-brand-orange/30 rounded-bl-xl transition-colors" />
-        <div className="absolute bottom-8 right-8 w-6 h-6 border-b-2 border-r-2 border-slate-100 group-hover:border-brand-orange/30 rounded-br-xl transition-colors" />
+        <div className="absolute top-8 left-8 w-6 h-6 border-t-2 border-l-2 border-border-main group-hover:border-brand-orange/30 rounded-tl-xl transition-colors" />
+        <div className="absolute top-8 right-8 w-6 h-6 border-t-2 border-r-2 border-border-main group-hover:border-brand-orange/30 rounded-tr-xl transition-colors" />
+        <div className="absolute bottom-8 left-8 w-6 h-6 border-b-2 border-l-2 border-border-main group-hover:border-brand-orange/30 rounded-bl-xl transition-colors" />
+        <div className="absolute bottom-8 right-8 w-6 h-6 border-b-2 border-r-2 border-border-main group-hover:border-brand-orange/30 rounded-br-xl transition-colors" />
       </div>
 
       <AnimatePresence>
@@ -72,7 +72,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing }) =
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="mt-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 text-sm font-bold uppercase tracking-wider"
+            className="mt-6 p-4 bg-status-resistant/10 border border-status-resistant/20 rounded-2xl flex items-center gap-3 text-status-resistant text-sm font-bold uppercase tracking-wider"
           >
             <AlertCircle className="w-4 h-4 shrink-0" />
             {error}
@@ -83,15 +83,15 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing }) =
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="mt-8 p-6 bg-white border border-slate-100 shadow-sm rounded-3xl flex items-center justify-between"
+            className="mt-8 p-6 bg-bg-primary border border-border-main shadow-sm rounded-3xl flex items-center justify-between"
           >
             <div className="flex items-center gap-6">
-              <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-text-primary text-bg-primary rounded-2xl flex items-center justify-center">
                 <File className="w-6 h-6" />
               </div>
               <div>
-                <p className="font-bold text-slate-900 truncate max-w-[200px] md:max-w-xs">{selectedFile.name}</p>
-                <p className="text-xs font-mono text-slate-400">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                <p className="font-bold text-text-primary truncate max-w-[200px] md:max-w-xs">{selectedFile.name}</p>
+                <p className="text-xs font-mono text-text-muted">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
               </div>
             </div>
             {!isProcessing && (
@@ -100,7 +100,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing }) =
                   e.stopPropagation();
                   onFileSelect(null as any);
                 }}
-                className="p-3 hover:bg-slate-50 rounded-full transition-colors text-slate-300 hover:text-red-500"
+                className="p-3 hover:bg-bg-secondary rounded-full transition-colors text-text-muted hover:text-status-resistant"
                 title="Remove file"
               >
                 <X className="w-5 h-5" />
