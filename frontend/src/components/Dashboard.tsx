@@ -1,7 +1,21 @@
-// src/components/Dashboard.tsx
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  ArrowLeft, 
+  Upload, 
+  FileText, 
+  Database, 
+  Cpu, 
+  Activity, 
+  ShieldCheck, 
+  ShieldAlert, 
+  Download, 
+  RotateCcw,
+  ChevronRight,
+  Info
+} from 'lucide-react';
+import Navbar from './Navbar';
 
 interface PredictionResult {
   id: string;
@@ -21,11 +35,11 @@ interface UploadedFile {
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [isDragging, setIsDragging] = useState(false);
+  const [activeTab, setActiveTab] = useState<'vigilance' | 'vengeance'>('vigilance');
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [results, setResults] = useState<PredictionResult[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'upload' | 'results' | 'history'>('upload');
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -61,7 +75,6 @@ const Dashboard: React.FC = () => {
     
     setUploadedFiles([newFile]);
     
-    // Simulate upload progress
     let progress = 0;
     const interval = setInterval(() => {
       progress += 10;
@@ -78,7 +91,7 @@ const Dashboard: React.FC = () => {
           runAnalysis();
         }, 500);
       }
-    }, 200);
+    }, 150);
   };
 
   const runAnalysis = () => {
@@ -93,432 +106,260 @@ const Dashboard: React.FC = () => {
       ];
       setResults(mockResults);
       setIsAnalyzing(false);
-      setActiveTab('results');
+      setActiveTab('vengeance');
       setUploadedFiles(prev => prev.map(f => ({ ...f, status: 'complete' })));
-    }, 3000);
-  };
-
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      simulateUpload(e.target.files[0]);
-    }
-  };
-
-  const exportPDF = () => {
-    alert('Generating PDF report... (Demo functionality)');
-  };
-
-  const clearResults = () => {
-    setResults([]);
-    setUploadedFiles([]);
-    setActiveTab('upload');
+    }, 2500);
   };
 
   return (
-    <div className="min-h-screen bg-transparent relative overflow-hidden">
-      {/* Background Grid (Matching Landing Page) */}
-      <div className="fixed inset-0 z-0 opacity-[0.04]"
-        style={{
-          backgroundSize: '40px 40px',
-          backgroundImage: `linear-gradient(to right, #64748b 0.5px, transparent 0.5px),
-                           linear-gradient(to bottom, #64748b 0.5px, transparent 0.5px)`,
-          maskImage: 'radial-gradient(circle at center, black 30%, transparent 80%)',
-          WebkitMaskImage: 'radial-gradient(circle at center, black 30%, transparent 80%)'
-        }}
-      />
+    <div className="min-h-screen bg-white selection:bg-brand-orange selection:text-white">
+      <Navbar />
 
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-purple-800 rounded-xl flex items-center justify-center shadow-lg">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-              </svg>
+      {/* Page Header */}
+      <header className="pt-32 pb-16 border-b border-slate-100 bg-slate-50/50">
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col md:flex-row md:items-end justify-between gap-8"
+          >
+            <div>
+              <div className="flex items-center gap-3 text-brand-orange mb-4 font-bold uppercase tracking-[0.2em] text-sm">
+                <Activity className="w-5 h-5" />
+                <span>Diagnostic Portal</span>
+              </div>
+              <h1 className="text-5xl md:text-7xl font-serif italic text-slate-900 leading-none">
+                {activeTab === 'vigilance' ? 'Vigilance' : 'Vengeance'}
+              </h1>
+              <p className="mt-6 text-xl text-slate-500 max-w-2xl font-light">
+                {activeTab === 'vigilance' 
+                  ? 'Advanced processing engine for raw genomic data and k-mer signature extraction.' 
+                  : 'Actionable resistance predictions and susceptibility intelligence.'}
+              </p>
             </div>
-            <span className="text-xl font-bold text-slate-800 tracking-tight">Zenthera <span className="text-purple-600 font-light">Lab</span></span>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="px-4 py-2 bg-white/80 backdrop-blur-md rounded-full border border-slate-200 shadow-sm flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-xs font-mono text-slate-600 uppercase tracking-wider">Secure Analysis</span>
+            
+            <div className="flex gap-4">
+               <button 
+                onClick={() => setActiveTab('vigilance')}
+                className={`px-8 py-4 rounded-full text-sm font-bold tracking-wider uppercase transition-all ${
+                  activeTab === 'vigilance' 
+                    ? 'bg-slate-900 text-white' 
+                    : 'bg-white text-slate-600 border border-slate-200 hover:border-brand-orange'
+                }`}
+              >
+                Vigilance
+              </button>
+              <button 
+                onClick={() => setActiveTab('vengeance')}
+                disabled={results.length === 0}
+                className={`px-8 py-4 rounded-full text-sm font-bold tracking-wider uppercase transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
+                  activeTab === 'vengeance' 
+                    ? 'bg-slate-900 text-white' 
+                    : 'bg-white text-slate-600 border border-slate-200 hover:border-brand-orange'
+                }`}
+              >
+                Vengeance
+              </button>
             </div>
-            <button 
-              onClick={() => navigate('/')}
-              className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
-              title="Back to Landing"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-            </button>
-          </div>
+          </motion.div>
         </div>
-      </nav>
+      </header>
 
       {/* Main Content */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 py-8">
-        {/* Tab Navigation */}
-        <div className="flex gap-2 mb-8 bg-white/40 backdrop-blur-xl p-1 rounded-2xl border border-white/40 w-fit shadow-xl shadow-purple-900/5">
-          <button 
-            onClick={() => setActiveTab('upload')}
-            className={`px-6 py-2.5 rounded-xl text-sm font-medium transition-all ${
-              activeTab === 'upload' 
-                ? 'bg-purple-600 text-white shadow-md' 
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            New Analysis
-          </button>
-          <button 
-            onClick={() => setActiveTab('results')}
-            disabled={results.length === 0}
-            className={`px-6 py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-              activeTab === 'results' 
-                ? 'bg-purple-600 text-white shadow-md' 
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            Results {results.length > 0 && `(${results.length})`}
-          </button>
-          <button 
-            onClick={() => setActiveTab('history')}
-            className={`px-6 py-2.5 rounded-xl text-sm font-medium transition-all ${
-              activeTab === 'history' 
-                ? 'bg-purple-600 text-white shadow-md' 
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            History
-          </button>
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left Column - Upload Area */}
-          <div className="lg:col-span-2 space-y-6">
-            <AnimatePresence mode="wait">
-              {activeTab === 'upload' && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="space-y-6"
+      <main className="max-w-7xl mx-auto px-6 md:px-12 py-16">
+        <AnimatePresence mode="wait">
+          {activeTab === 'vigilance' ? (
+            <motion.div 
+              key="vigilance"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="grid lg:grid-cols-3 gap-12"
+            >
+              {/* Upload Zone */}
+              <div className="lg:col-span-2 space-y-8">
+                <div 
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={`relative aspect-[16/9] lg:aspect-auto lg:h-[400px] rounded-[40px] border-2 border-dashed transition-all duration-500 flex flex-col items-center justify-center p-12 overflow-hidden ${
+                    isDragging 
+                      ? 'border-brand-orange bg-brand-orange/5 scale-[1.01]' 
+                      : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-brand-orange/50'
+                  }`}
                 >
-                  {/* Upload Zone */}
-                  <div 
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    className={`relative bg-white/40 backdrop-blur-xl rounded-3xl border-2 border-dashed transition-all duration-300 ${
-                      isDragging 
-                        ? 'border-purple-500 bg-purple-50/50 scale-[1.02]' 
-                        : 'border-white/40 hover:border-purple-300'
-                    } p-12 shadow-xl shadow-purple-900/5`}
-                  >
-                    <input 
-                      type="file" 
-                      accept=".fasta,.fna,.fa" 
-                      onChange={handleFileInput}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                    
-                    <div className="text-center">
-                      <div className={`w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center transition-colors ${
-                        isDragging ? 'bg-purple-100' : 'bg-slate-50'
-                      }`}>
-                        <svg className={`w-10 h-10 transition-colors ${isDragging ? 'text-purple-600' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
-                      </div>
-                      
-                      <h3 className="text-2xl font-bold text-slate-800 mb-2">
-                        {isDragging ? 'Drop to Upload' : 'Upload Genomic Data'}
-                      </h3>
-                      <p className="text-slate-500 mb-6">
-                        Drag and drop your <span className="text-purple-600 font-mono">.fasta</span> or <span className="text-purple-600 font-mono">.fna</span> files here
-                      </p>
-                      
-                      <button className="px-6 py-2.5 bg-white border border-slate-200 rounded-full text-sm font-medium text-slate-700 hover:border-purple-300 hover:text-purple-600 transition-all shadow-sm">
-                        Browse Files
-                      </button>
-                    </div>
+                  <input 
+                    type="file" 
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    onChange={(e) => e.target.files?.[0] && simulateUpload(e.target.files[0])}
+                  />
+                  
+                  <div className="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mb-8">
+                    <Upload className={`w-8 h-8 transition-colors ${isDragging ? 'text-brand-orange' : 'text-slate-400'}`} />
                   </div>
+                  
+                  <h3 className="text-3xl font-bold text-slate-900 mb-4">Drop Sequence Data</h3>
+                  <p className="text-slate-500 text-center max-w-sm mb-8">
+                    Select <span className="text-brand-orange font-mono">.fasta</span>, <span className="text-brand-orange font-mono">.fna</span>, or <span className="text-brand-orange font-mono">.fa</span> genomic files for analysis.
+                  </p>
+                  
+                  <div className="px-8 py-3 bg-slate-900 text-white rounded-full text-xs font-bold tracking-widest uppercase">
+                    Browse Files
+                  </div>
+                </div>
 
-                  {/* Upload Progress */}
-                  {uploadedFiles.length > 0 && (
-                    <div className="bg-white/40 backdrop-blur-xl rounded-2xl p-6 shadow-xl shadow-purple-900/5 border border-white/40">
-                      <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span>
-                        Processing Queue
-                      </h4>
-                      <div className="space-y-3">
-                        {uploadedFiles.map((file) => (
-                          <div key={file.id} className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl">
-                            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex justify-between items-center mb-1">
-                                <span className="font-medium text-slate-800 text-sm">{file.name}</span>
-                                <span className="text-xs text-slate-500 font-mono">{file.size}</span>
-                              </div>
-                              <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                <div 
-                                  className="h-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all duration-300"
-                                  style={{ width: `${file.progress}%` }}
-                                />
-                              </div>
-                              <div className="mt-1 text-xs text-slate-500">
-                                {file.status === 'uploading' && `Uploading... ${file.progress}%`}
-                                {file.status === 'processing' && 'Analyzing k-mer frequencies...'}
-                                {file.status === 'complete' && 'Analysis complete'}
-                              </div>
-                            </div>
+                {uploadedFiles.length > 0 && (
+                  <div className="space-y-4">
+                    {uploadedFiles.map(file => (
+                      <div key={file.id} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-6">
+                        <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center flex-shrink-0">
+                          <FileText className="w-6 h-6" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="font-bold text-slate-900">{file.name}</span>
+                            <span className="text-xs font-mono text-slate-400 uppercase tracking-widest">{file.status}</span>
                           </div>
-                        ))}
+                          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <motion.div 
+                              className="h-full bg-brand-orange"
+                              initial={{ width: 0 }}
+                              animate={{ width: `${file.progress}%` }}
+                            />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  )}
-
-                  {/* Security Note */}
-                  <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-5 flex gap-4 items-start">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-800 text-sm mb-1">Security Note</h4>
-                      <p className="text-sm text-slate-600 leading-relaxed">
-                        Your data is processed locally on our secure ML nodes and is never used for training without consent. Files are encrypted during transit.
-                      </p>
-                    </div>
+                    ))}
                   </div>
-                </motion.div>
-              )}
+                )}
+              </div>
 
-              {activeTab === 'results' && results.length > 0 && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="space-y-6"
-                >
-                  {/* Results Header */}
-                  <div className="flex justify-between items-center mb-6">
-                    <div>
-                      <h3 className="text-2xl font-bold text-slate-800">Analysis Results</h3>
-                      <p className="text-slate-500 text-sm mt-1">Resistance prediction based on k-mer frequency analysis</p>
+              {/* Specs & Info */}
+              <div className="space-y-8">
+                <div className="bg-slate-900 rounded-[3rem] p-10 text-white shadow-2xl relative overflow-hidden">
+                   <div className="absolute top-0 right-0 p-8 opacity-10">
+                      <Database className="w-24 h-24" />
+                   </div>
+                   <h4 className="text-xl font-bold mb-8 flex items-center gap-3">
+                      <Cpu className="text-brand-orange w-5 h-5" />
+                      Platform Status
+                   </h4>
+                   <div className="space-y-6 font-mono text-xs">
+                      {[
+                        { label: "Cluster_Node", val: "ALPHA-9", color: "text-green-400" },
+                        { label: "GPU_Compute", val: "Active", color: "text-brand-orange" },
+                        { label: "Memory_Usage", val: "14.2 GB", color: "text-slate-300" },
+                        { label: "Encryption", val: "AES-256", color: "text-slate-300" }
+                      ].map((item, idx) => (
+                        <div key={idx} className="flex justify-between border-b border-slate-800 pb-4 last:border-0">
+                          <span className="text-slate-500 uppercase">{item.label}</span>
+                          <span className={item.color}>{item.val}</span>
+                        </div>
+                      ))}
+                   </div>
+                </div>
+
+                <div className="bg-slate-50 rounded-[3rem] p-10 border border-slate-100">
+                  <h4 className="text-xl font-bold mb-6 flex items-center gap-3">
+                    <Info className="text-brand-orange w-5 h-5" />
+                    Security Protocol
+                  </h4>
+                  <p className="text-slate-600 leading-relaxed text-sm">
+                    All genomic data is processed within an isolated sandbox. We do not store sequences after analysis unless explicitly requested for research collaboration.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="vengeance"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-12"
+            >
+              {/* Stats Overview */}
+              <div className="grid md:grid-cols-3 gap-8">
+                {[
+                  { label: "Resistant", val: results.filter(r => r.prediction === 'Resistant').length, color: "text-red-600", bg: "bg-red-50", icon: ShieldAlert },
+                  { label: "Susceptible", val: results.filter(r => r.prediction === 'Susceptible').length, color: "text-green-600", bg: "bg-green-50", icon: ShieldCheck },
+                  { label: "Precision", val: "94.2%", color: "text-brand-orange", bg: "bg-brand-orange/5", icon: Cpu }
+                ].map((stat, idx) => (
+                  <div key={idx} className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm">
+                    <div className={`w-14 h-14 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center mb-6`}>
+                      <stat.icon className="w-7 h-7" />
                     </div>
-                    <div className="flex gap-3">
-                      <button 
-                        onClick={clearResults}
-                        className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 transition-colors"
-                      >
-                        Clear
-                      </button>
-                      <button 
-                        onClick={exportPDF}
-                        className="px-5 py-2.5 bg-purple-600 text-white rounded-xl text-sm font-medium hover:bg-purple-700 transition-all shadow-lg shadow-purple-200 flex items-center gap-2"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Export PDF
-                      </button>
-                    </div>
+                    <div className="text-5xl font-bold text-slate-900 mb-2">{stat.val}</div>
+                    <div className="text-sm font-bold uppercase tracking-widest text-slate-400">{stat.label}</div>
                   </div>
+                ))}
+              </div>
 
-                  {/* Results Table */}
-                  <div className="bg-white/40 backdrop-blur-xl rounded-3xl shadow-xl shadow-purple-900/5 border border-white/40 overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-white/30 border-b border-white/20">
-                          <tr>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Antibiotic</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Prediction</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Confidence</th>
-                            <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Mechanism</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {results.map((result, idx) => (
-                            <motion.tr 
-                              key={result.id}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: idx * 0.1 }}
-                              className="hover:bg-slate-50/50 transition-colors"
-                            >
-                              <td className="px-6 py-4 font-medium text-slate-800">{result.antibiotic}</td>
-                              <td className="px-6 py-4">
-                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${
-                                  result.prediction === 'Resistant' 
-                                    ? 'bg-red-100 text-red-700 border border-red-200' 
-                                    : 'bg-green-100 text-green-700 border border-green-200'
-                                }`}>
-                                  {result.prediction === 'Resistant' ? (
-                                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                    </svg>
-                                  ) : (
-                                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                    </svg>
-                                  )}
-                                  {result.prediction}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                    <div 
-                                      className="h-full rounded-full bg-purple-500"
-                                      style={{ width: `${result.confidence}%` }}
-                                    />
+              {/* Results Table */}
+              <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
+                <div className="px-12 py-8 border-b border-slate-100 flex items-center justify-between">
+                   <h3 className="text-2xl font-bold text-slate-900">Resistance Profile</h3>
+                   <div className="flex gap-4">
+                      <button className="flex items-center gap-2 px-6 py-3 border border-slate-200 rounded-full text-xs font-bold uppercase tracking-widest hover:border-brand-orange transition-all">
+                        <Download className="w-4 h-4" /> Export
+                      </button>
+                      <button onClick={() => {setResults([]); setActiveTab('vigilance');}} className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-brand-orange transition-all">
+                        <RotateCcw className="w-4 h-4" /> New Scan
+                      </button>
+                   </div>
+                </div>
+                <div className="overflow-x-auto">
+                   <table className="w-full">
+                      <thead>
+                        <tr className="bg-slate-50/50 text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+                          <th className="px-12 py-6 text-left">Antibiotic</th>
+                          <th className="px-12 py-6 text-left">Result</th>
+                          <th className="px-12 py-6 text-left">Confidence</th>
+                          <th className="px-12 py-6 text-left">Mechanism</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {results.map((r, i) => (
+                          <motion.tr 
+                            key={r.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.1 }}
+                            className="hover:bg-slate-50/50 transition-colors"
+                          >
+                            <td className="px-12 py-8 font-bold text-slate-900 text-lg">{r.antibiotic}</td>
+                            <td className="px-12 py-8">
+                               <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest ${
+                                 r.prediction === 'Resistant' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'
+                               }`}>
+                                  <div className={`w-2 h-2 rounded-full ${r.prediction === 'Resistant' ? 'bg-red-600 animate-pulse' : 'bg-green-600'}`} />
+                                  {r.prediction}
+                               </div>
+                            </td>
+                            <td className="px-12 py-8">
+                               <div className="flex items-center gap-4">
+                                  <div className="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                     <div className="h-full bg-brand-orange" style={{ width: `${r.confidence}%` }} />
                                   </div>
-                                  <span className="text-sm font-mono text-slate-600">{result.confidence}%</span>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 text-sm text-slate-600 font-mono">
-                                {result.mechanism || <span className="text-slate-300 italic">None detected</span>}
-                              </td>
-                            </motion.tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  {/* Summary Cards */}
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-white/40 backdrop-blur-xl p-6 rounded-2xl border border-white/40 shadow-xl shadow-purple-900/5">
-                      <div className="text-sm text-slate-500 mb-1">Total Predictions</div>
-                      <div className="text-3xl font-bold text-slate-800">{results.length}</div>
-                    </div>
-                    <div className="bg-white/40 backdrop-blur-xl p-6 rounded-2xl border border-white/40 shadow-xl shadow-purple-900/5">
-                      <div className="text-sm text-slate-500 mb-1">Resistant</div>
-                      <div className="text-3xl font-bold text-red-600">{results.filter(r => r.prediction === 'Resistant').length}</div>
-                    </div>
-                    <div className="bg-white/40 backdrop-blur-xl p-6 rounded-2xl border border-white/40 shadow-xl shadow-purple-900/5">
-                      <div className="text-sm text-slate-500 mb-1">Susceptible</div>
-                      <div className="text-3xl font-bold text-green-600">{results.filter(r => r.prediction === 'Susceptible').length}</div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {activeTab === 'history' && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white/40 backdrop-blur-xl rounded-3xl p-12 text-center shadow-xl shadow-purple-900/5 border border-white/40"
-                >
-                  <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-800 mb-2">Analysis History</h3>
-                  <p className="text-slate-500">Your previous analyses will appear here</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Right Column - Info Cards */}
-          <div className="space-y-6">
-            {/* System Status */}
-            <div className="bg-slate-900 rounded-3xl p-6 text-white shadow-2xl">
-              <h4 className="text-lg font-bold mb-4 text-slate-200">System Status</h4>
-              <div className="space-y-3 font-mono text-sm">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">STATUS</span>
-                  <span className="text-green-400 flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
-                    ONLINE
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">GPU_ACCEL</span>
-                  <span className="text-purple-400">ENABLED</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">LATENCY</span>
-                  <span className="text-slate-300">140ms</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">QUEUE</span>
-                  <span className="text-slate-300">0 pending</span>
+                                  <span className="font-mono text-sm text-slate-500">{r.confidence}%</span>
+                               </div>
+                            </td>
+                            <td className="px-12 py-8 font-mono text-sm text-brand-orange">
+                               {r.mechanism || <span className="text-slate-300 italic">-</span>}
+                            </td>
+                          </motion.tr>
+                        ))}
+                      </tbody>
+                   </table>
                 </div>
               </div>
-              <div className="mt-6 pt-6 border-t border-slate-800">
-                <div className="text-xs text-slate-500 uppercase tracking-wider mb-2">Supported Formats</div>
-                <ul className="space-y-2 text-sm text-slate-300">
-                  <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
-                    FASTA Sequences (.fasta)
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
-                    FNA Nucleotide Files (.fna)
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
-                    Multi-FASTA Batches
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            {/* Quote */}
-            <div className="bg-gradient-to-br from-purple-50 to-white rounded-3xl p-6 border border-purple-100">
-              <svg className="w-8 h-8 text-purple-300 mb-3" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
-              </svg>
-              <p className="text-slate-600 text-sm italic leading-relaxed mb-4">
-                "Zenthera represents a shift from traditional culture-based methods toward near-instant genomic diagnostic workflows."
-              </p>
-              <div className="text-xs text-slate-500 font-medium">
-                — Clinical Microbiology Journal, 2024
-              </div>
-            </div>
-
-            {/* Quick Tips */}
-            <div className="bg-white/40 backdrop-blur-xl rounded-3xl p-6 border border-white/40 shadow-xl shadow-purple-900/5">
-              <h4 className="font-bold text-slate-800 mb-4">Analysis Tips</h4>
-              <ul className="space-y-3 text-sm text-slate-600">
-                <li className="flex gap-3">
-                  <span className="flex-shrink-0 w-5 h-5 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xs font-bold">1</span>
-                  <span>Ensure files are &lt;50MB for optimal processing</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="flex-shrink-0 w-5 h-5 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xs font-bold">2</span>
-                  <span>Use standard FASTA format headers</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="flex-shrink-0 w-5 h-5 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xs font-bold">3</span>
-                  <span>Quality scores are not required</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
 
-      {/* Footer */}
-      <footer className="relative z-10 mt-20 py-8 border-t border-slate-200 bg-white/50 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
-          <p>© 2024 Zenthera AI. Experimental clinical diagnostic tool.</p>
-          <div className="flex gap-6">
-            <a href="#" className="hover:text-purple-600 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-purple-600 transition-colors">Documentation</a>
-            <a href="#" className="hover:text-purple-600 transition-colors">Contact Support</a>
-          </div>
-        </div>
-      </footer>
+      {/* Background Grain */}
+      <div className="grain-overlay opacity-[0.03]" />
     </div>
   );
 };

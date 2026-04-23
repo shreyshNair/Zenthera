@@ -1,9 +1,10 @@
-// src/components/LandingPage.tsx
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
-import { ArrowRight } from "lucide-react";
+import { motion, useScroll, useTransform, useSpring, AnimatePresence } from 'framer-motion';
+import { ArrowRight, Dna, ShieldCheck, Zap, FileText, ChevronRight, Play } from 'lucide-react';
+import Navbar from './Navbar';
 
+// --- Original Hero Components ---
 interface Bacterium {
   id: number;
   x: number;
@@ -40,7 +41,6 @@ const BacteriaShape = ({ type, size }: { type: string; size: number }) => {
       </svg>
     );
   }
-  
   if (type === "coccus") {
     return (
       <svg width={size * 1.5} height={size * 1.5} viewBox="0 0 30 30">
@@ -49,7 +49,6 @@ const BacteriaShape = ({ type, size }: { type: string; size: number }) => {
       </svg>
     );
   }
-  
   if (type === "spiral") {
     return (
       <svg width={size * 3} height={size} viewBox="0 0 60 20">
@@ -57,7 +56,6 @@ const BacteriaShape = ({ type, size }: { type: string; size: number }) => {
       </svg>
     );
   }
-  
   if (type === "vibrio") {
     return (
       <svg width={size * 2} height={size * 1.5} viewBox="0 0 40 30">
@@ -66,7 +64,6 @@ const BacteriaShape = ({ type, size }: { type: string; size: number }) => {
       </svg>
     );
   }
-  
   return (
     <svg width={size * 3.5} height={size} viewBox="0 0 70 20">
       <rect x="3" y="4" width="18" height="12" rx="6" fill="none" stroke="currentColor" strokeWidth="1.2" />
@@ -76,159 +73,28 @@ const BacteriaShape = ({ type, size }: { type: string; size: number }) => {
   );
 };
 
-const DnaIcon = () => (
-  <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.575.563c-.381.136-.775.204-1.172.204H7.547c-.397 0-.79-.068-1.172-.204L4.8 15.3m15 0a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25m19.5 0v-2.625a2.25 2.25 0 00-2.25-2.25h-15a2.25 2.25 0 00-2.25 2.25v2.625" />
-  </svg>
+// --- Animation Reveal Wrapper ---
+const FadeInWhenVisible = ({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 40 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, margin: "-100px" }}
+    transition={{ duration: 0.8, delay, ease: [0.16, 1, 0.3, 1] }}
+  >
+    {children}
+  </motion.div>
 );
 
-const BrainIcon = () => (
-  <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
-  </svg>
-);
-
-const LightningIcon = () => (
-  <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-  </svg>
-);
-
-const FileIcon = () => (
-  <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-  </svg>
-);
-
-const features = [
-  {
-    title: "FASTA Analysis",
-    desc: "Upload bacterial genome sequences in standard FASTA/FNA formats instantly.",
-    icon: DnaIcon
-  },
-  {
-    title: "ML Prediction",
-    desc: "Advanced Random Forest & Logistic Regression models for resistance prediction.",
-    icon: BrainIcon
-  },
-  {
-    title: "Real-time Results",
-    desc: "Near-instant predictions replacing traditional 48-hour culture methods.",
-    icon: LightningIcon
-  },
-  {
-    title: "PDF Reports",
-    desc: "Export comprehensive analysis reports with confidence scores for clinical records.",
-    icon: FileIcon
-  }
-];
-
-const workflow = [
-  { step: "01", title: "Upload", desc: "Drag & drop your .fasta or .fna genome files into the secure upload portal." },
-  { step: "02", title: "Analysis", desc: "Our backend extracts k-mer frequencies and processes through trained ML models." },
-  { step: "03", title: "Prediction", desc: "Receive instant resistance/susceptibility predictions with confidence intervals." },
-  { step: "04", title: "Export", desc: "Download detailed PDF reports for research documentation or clinical decisions." }
-];
-
-const reviews = [
-  {
-    quote: "Zenthera reduced our diagnostic time from 2 days to 2 minutes. Revolutionary for ICU infections.",
-    author: "Dr. Sarah Chen",
-    role: "Clinical Microbiologist",
-    org: "Johns Hopkins Hospital"
-  },
-  {
-    quote: "The accuracy of k-mer analysis paired with their ML pipeline is remarkable for genomic surveillance.",
-    author: "Prof. James Rodriguez",
-    role: "Research Director",
-    org: "Broad Institute"
-  },
-  {
-    quote: "Finally, a tool that makes AMR prediction accessible without expensive lab infrastructure.",
-    author: "Dr. Aisha Patel",
-    role: "Infectious Disease Specialist",
-    org: "WHO Global AMR Observatory"
-  }
-];
-
-interface ParallaxSectionProps {
-  children: React.ReactNode;
-  className?: string;
-  index?: number;
-  zIndex?: number;
-  containerRef: React.RefObject<HTMLDivElement | null>;
-}
-
-const ParallaxSection: React.FC<ParallaxSectionProps> = ({ 
-  children, 
-  className, 
-  zIndex = 10, 
-  containerRef 
-}) => {
-  const ref = useRef<HTMLDivElement>(null);
-  
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    container: containerRef,
-    offset: ["start end", "end start"]
-  });
-  
-  const smoothProgress = useSpring(scrollYProgress, { damping: 20, stiffness: 100 });
-  
-  const y = useTransform(smoothProgress, [0, 1], [100, -100]);
-  const opacity = useTransform(smoothProgress, [0, 0.15, 0.85, 1], [0, 1, 1, 0]);
-  const scale = useTransform(smoothProgress, [0, 0.5, 1], [0.95, 1, 0.95]);
-  const bgY = useTransform(smoothProgress, [0, 1], [-50, 50]);
-
-  return (
-    <div 
-      ref={ref} 
-      className={`relative min-h-screen w-full flex items-center justify-center ${className}`} 
-      style={{ zIndex }}
-    >
-      <motion.div 
-        className="absolute inset-0 pointer-events-none overflow-hidden"
-        style={{ y: bgY }}
-      >
-        {/* Grid Layer with Edge Fading */}
-        <div className="absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundSize: '40px 40px',
-            backgroundImage: 'linear-gradient(to right, #64748b 0.5px, transparent 0.5px), linear-gradient(to bottom, #648b70ff 0.5px, transparent 0.5px)',
-            maskImage: 'radial-gradient(circle at center, black 30%, transparent 80%)',
-            WebkitMaskImage: 'radial-gradient(circle at center, black 30%, transparent 80%)'
-          }}
-        />
-        <div className="absolute -right-20 top-1/4 w-96 h-96 bg-purple-100 rounded-full blur-3xl opacity-30" />
-        <div className="absolute -left-20 bottom-1/4 w-72 h-72 bg-slate-100 rounded-full blur-3xl opacity-40" />
-      </motion.div>
-      
-      <motion.div 
-        className="relative w-full"
-        style={{ y, opacity, scale }}
-      >
-        {children}
-      </motion.div>
-    </div>
-  );
-};
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const heroRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   
   const [mousePos, setMousePos] = useState({ x: -300, y: -300 });
   const [bacteria] = useState(() => generateBacteria(80));
   const [positions, setPositions] = useState<{ x: number; y: number; rotation: number }[]>([]);
 
-  const { scrollYProgress } = useScroll({ container: containerRef });
-  const smoothScroll = useSpring(scrollYProgress, { damping: 20, stiffness: 100 });
-  
-  const heroOpacity = useTransform(smoothScroll, [0, 0.12, 0.25], [1, 1, 0]);
-  const heroScale = useTransform(smoothScroll, [0, 0.25], [1, 1.05]);
-  const heroBlur = useTransform(smoothScroll, [0.1, 0.25], [0, 25]);
-  const heroY = useTransform(smoothScroll, [0, 0.25], [0, -50]);
+  const { scrollY } = useScroll();
 
   useEffect(() => {
     setPositions(bacteria.map((b) => ({ x: b.x, y: b.y, rotation: b.rotation })));
@@ -252,109 +118,55 @@ const LandingPage: React.FC = () => {
 
   const torchRadius = 250;
 
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
-    <div 
-      ref={containerRef} 
-      className="relative w-full h-screen overflow-y-auto overflow-x-hidden bg-slate-50 snap-y snap-proximity scroll-smooth"
-    >
-      <nav className="fixed top-8 left-1/2 -translate-x-1/2 z-[100] w-fit">
-        <div className="flex items-center gap-6 px-6 py-2.5 bg-white/40 backdrop-blur-xl rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-white/40 ring-1 ring-black/5">
-          <span 
-            className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 via-indigo-800 to-slate-900 cursor-pointer hover:opacity-80 transition-opacity whitespace-nowrap" 
-            onClick={() => navigate('/')}
-          >
-            Zenthera
-          </span>
-          
-          <div className="h-4 w-px bg-slate-400/30 mx-1" />
-          
-          <div className="flex items-center gap-1.5">
-            {[
-              { label: 'Dashboard', path: '/dashboard', type: 'link' },
-              { label: 'Features', id: 'section-features', type: 'scroll' },
-              { label: 'Analysis', id: 'section-workflow', type: 'scroll' },
-              { label: 'About', id: 'section-about', type: 'scroll' }
-            ].map((item) => (
-              <button 
-                key={item.label}
-                onClick={() => item.type === 'link' ? navigate(item.path!) : scrollToSection(item.id!)} 
-                className="px-4 py-1.5 text-[13px] font-medium text-slate-700 hover:text-purple-700 hover:bg-white/50 rounded-full transition-all active:scale-95"
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
+    <div className="relative w-full bg-white">
+      <Navbar />
 
-          <div className="h-4 w-px bg-slate-400/30 mx-1" />
-
-          <div className="flex items-center gap-2 pl-1 pr-2">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
-            </span>
-            <span className="text-[10px] font-bold text-purple-700 uppercase tracking-widest">Active</span>
-          </div>
-        </div>
-      </nav>
-
-      <motion.div 
+      {/* ============================================
+          HERO SECTION (Standard Layout)
+          ============================================ */}
+      <div 
         ref={heroRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setMousePos({ x: -300, y: -300 })}
-        style={{ 
-          opacity: heroOpacity, 
-          filter: `blur(${heroBlur}px)`, 
-          scale: heroScale,
-          y: heroY
-        }}
-        className="sticky top-0 h-screen w-full overflow-hidden z-[20] bg-slate-50 snap-start"
+        className="relative min-h-[90vh] w-full overflow-hidden bg-white flex items-center pt-24"
       >
-        <div className="absolute inset-0 z-0 opacity-[0.05]"
+        {/* Subtle Grid */}
+        <div className="absolute inset-0 z-0 opacity-[0.03]"
           style={{
-            backgroundSize: '30px 30px',
-            backgroundImage: `linear-gradient(to right, #64748b 0.5px, transparent 0.5px),
-                             linear-gradient(to bottom, #64748b 0.5px, transparent 0.5px)`,
-            maskImage: 'radial-gradient(circle at 50% 50%, black 20%, transparent 90%)',
-            WebkitMaskImage: 'radial-gradient(circle at 50% 50%, black 20%, transparent 90%)'
+            backgroundSize: '40px 40px',
+            backgroundImage: `linear-gradient(to right, #64748b 1px, transparent 1px),
+                             linear-gradient(to bottom, #64748b 1px, transparent 1px)`,
+            maskImage: 'radial-gradient(circle at 50% 50%, black 30%, transparent 80%)',
           }}
         />
 
+        {/* Torch Glow Effect */}
         <div
-          className="pointer-events-none fixed z-10 rounded-full mix-blend-multiply"
+          className="pointer-events-none absolute z-10 rounded-full"
           style={{
             left: mousePos.x - torchRadius,
             top: mousePos.y - torchRadius,
             width: torchRadius * 2,
             height: torchRadius * 2,
-            background: `radial-gradient(circle, rgba(147, 51, 234, 0.15) 0%, rgba(147, 51, 234, 0.05) 50%, transparent 70%)`,
+            background: `radial-gradient(circle, rgba(241, 90, 36, 0.15) 0%, rgba(241, 90, 36, 0.05) 40%, transparent 70%)`,
+            mixBlendMode: 'multiply'
           }}
         />
 
+        {/* Bacteria Layer */}
         <div className="absolute inset-0 pointer-events-none z-[5]">
           {bacteria.map((b, i) => {
             if (!positions[i]) return null;
-            const bx = (positions[i].x / 100) * (heroRef.current?.clientWidth || window.innerWidth);
-            const by = (positions[i].y / 100) * (heroRef.current?.clientHeight || window.innerHeight);
-            const dist = Math.sqrt((bx - mousePos.x) ** 2 + (by - mousePos.y) ** 2);
-            const visible = dist < torchRadius;
-            const intensity = visible ? Math.max(0, 1 - dist / torchRadius) : 0;
-
             return (
               <div
                 key={b.id}
-                className="absolute transition-opacity duration-300 text-purple-600 drop-shadow-[0_0_15px_rgba(168,85,247,0.3)]"
+                className="absolute transition-opacity duration-500 text-brand-orange"
                 style={{
                   left: `${positions[i].x}%`,
                   top: `${positions[i].y}%`,
                   transform: `rotate(${positions[i].rotation}deg)`,
-                  opacity: intensity * b.opacity,
+                  opacity: b.opacity * 0.4,
                 }}
               >
                 <BacteriaShape type={b.type} size={b.size} />
@@ -363,228 +175,300 @@ const LandingPage: React.FC = () => {
           })}
         </div>
 
-        <div className="relative z-20 flex flex-col items-center justify-center h-full px-6 pointer-events-none">
+        {/* Hero Content - SPLIT LAYOUT */}
+        <div className="relative z-20 w-full max-w-7xl mx-auto px-6 md:px-12 flex flex-col md:flex-row items-center justify-between gap-16 py-20">
+          {/* Left Side: Text & Brand */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1 }}
-            className="flex flex-col items-center"
+            initial={{ opacity: 0, x: -60 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+            className="flex-1 text-left relative"
           >
-            <h1 className="font-serif italic text-7xl md:text-9xl text-slate-800 text-center leading-none mb-6 pointer-events-auto">
-              Zenthera<span className="text-purple-600">AI</span>
+            {/* Subtle floating glass background for text */}
+            <div className="absolute -inset-10 bg-white/20 backdrop-blur-[2px] rounded-[4rem] -z-10 border border-white/30 shadow-[0_8px_32px_0_rgba(241,90,36,0.05)]" />
+
+            <div className="mb-6 inline-flex items-center gap-2 px-4 py-2 bg-brand-orange/10 rounded-full border border-brand-orange/20">
+              <div className="w-2 h-2 bg-brand-orange rounded-full animate-pulse" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-orange">Clinical Intelligence v3.0</span>
+            </div>
+
+            <h1 className="font-serif italic text-7xl md:text-[8rem] text-slate-900 leading-[0.85] mb-10 tracking-tighter">
+              Zenthera
+              <br />
+              <span className="text-brand-orange italic relative inline-block">
+                AI
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: '100%' }}
+                  transition={{ duration: 1.5, delay: 1, ease: "circOut" }}
+                  className="absolute -bottom-2 left-0 h-1.5 bg-brand-orange/30 rounded-full"
+                />
+              </span>
             </h1>
 
-            <p className="text-slate-500 font-body text-lg md:text-xl text-center max-w-lg mb-3 font-light tracking-wide">
-              Predict antibiotic resistance from genomic sequences — instantly.
+            <p className="text-slate-500 text-xl md:text-2xl max-w-lg mb-12 font-light tracking-wide leading-relaxed">
+              Accelerating antibiotic discovery and resistance prediction through <span className="text-slate-900 font-medium italic">high-fidelity genomic intelligence.</span>
             </p>
 
-            <p className="text-slate-400 font-mono text-[11px] mb-12 tracking-widest uppercase">
-              [ Hover to reveal specimens ]
-            </p>
-
-            <button
+            <motion.button
               onClick={() => navigate('/dashboard')}
-              className="pointer-events-auto flex items-center gap-3 px-8 py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-full font-display text-xs tracking-wider uppercase transition-all shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:shadow-[0_0_30px_rgba(147,51,234,0.5)] hover:-translate-y-0.5"
+              whileHover={{ scale: 1.02, boxShadow: '0 20px 40px rgba(241,90,36,0.25)' }}
+              whileTap={{ scale: 0.98 }}
+              className="group relative flex items-center gap-4 px-12 py-6 bg-slate-900 text-white rounded-full text-sm font-bold tracking-wider uppercase transition-all overflow-hidden shadow-2xl"
             >
-              Get Started
-              <ArrowRight className="h-4 w-4" />
-            </button>
+              <div className="absolute inset-0 bg-gradient-to-r from-brand-orange to-[#ff8c5a] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <span className="relative z-10">Initialize Pipeline</span>
+              <ArrowRight className="relative z-10 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </motion.button>
+
+            <p className="text-slate-400 font-mono text-[9px] mt-16 tracking-[0.4em] uppercase opacity-50">
+              [ Interactive Specimen Environment Active ]
+            </p>
+          </motion.div>
+
+          {/* Right Side: Blooddrop Video Animation */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.85, x: 60 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+            className="flex-1 flex justify-center items-center relative"
+          >
+            {/* Secondary atmospheric glow behind drop */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] aspect-square bg-brand-orange/5 blur-[120px] rounded-full pointer-events-none" />
+
+            <div className="relative w-full max-w-md aspect-square rounded-[50%_50%_50%_0] rotate-[135deg] overflow-hidden shadow-[0_40px_100px_-20px_rgba(241,90,36,0.35)] border-8 border-white bg-black group transition-all duration-1000 hover:shadow-[0_60px_120px_-30px_rgba(241,90,36,0.5)]">
+              
+              <motion.div 
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                className="w-full h-full -rotate-[135deg] scale-[1.6]"
+              >
+                <video 
+                  autoPlay 
+                  loop 
+                  muted 
+                  playsInline
+                  className="w-full h-full object-cover grayscale-[0.2] contrast-125"
+                >
+                  <source src="/dnaanimation.mp4" type="video/mp4" />
+                </video>
+              </motion.div>
+
+              {/* Glass Glare Layer */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none -rotate-[135deg] opacity-60" />
+              
+              {/* Internal Brand Glow */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-brand-orange/30 via-transparent to-brand-orange/10 pointer-events-none -rotate-[135deg] mix-blend-overlay" />
+              
+              {/* Hover Bloom */}
+              <div className="absolute -inset-10 bg-brand-orange/30 blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none" />
+            </div>
           </motion.div>
         </div>
+      </div>
 
-        <motion.div 
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 pointer-events-auto"
-          animate={{ y: [0, 10, 0] }}
-          transition={{ repeat: Infinity, duration: 2 }}
-        >
-          <div className="w-6 h-10 border-2 border-slate-300 rounded-full flex justify-center p-1">
-            <div className="w-1 h-2 bg-purple-400 rounded-full" />
+      {/* ============================================
+          SECTIONS (Restructured for Single Page)
+          ============================================ */}
+      
+      {/* Specificity Section */}
+      <section id="section-about" className="relative py-32 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
+          <FadeInWhenVisible>
+            <div className="text-center mb-24">
+              <div className="text-brand-orange font-bold uppercase tracking-widest text-xs mb-4">Precision</div>
+              <h2 className="text-5xl md:text-6xl font-bold mb-8">Designed Specifically For</h2>
+              <div className="w-20 h-1.5 bg-brand-orange mx-auto rounded-full"></div>
+            </div>
+          </FadeInWhenVisible>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { title: "Clinical Researchers", desc: "Accelerate genomic surveillance and identify emerging resistance patterns across bacterial populations.", icon: ShieldCheck, color: "bg-brand-orange" },
+              { title: "Hospital Diagnostics", desc: "Reduce turn-around time for critical infections from days to minutes, enabling faster evidence-based selection.", icon: Zap, color: "bg-slate-900" },
+              { title: "Public Health Agencies", desc: "Monitor AMR prevalence and spread with automated data processing and standardized reports.", icon: FileText, color: "bg-brand-orange" }
+            ].map((card, idx) => (
+              <motion.div 
+                key={idx} 
+                whileHover={{ y: -10 }} 
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
+                className="bg-white p-12 rounded-[2.5rem] shadow-sm border border-slate-100 group transition-all"
+              >
+                <div className={`w-14 h-14 ${card.color} rounded-2xl flex items-center justify-center mb-8 transform group-hover:rotate-6 transition-transform`}>
+                  <card.icon className="text-white w-7 h-7" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4">{card.title}</h3>
+                <p className="text-slate-600 leading-relaxed mb-8">{card.desc}</p>
+                <div className="flex items-center gap-2 text-brand-orange font-bold cursor-pointer group/link">
+                  Learn More <ChevronRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
+                </div>
+              </motion.div>
+            ))}
           </div>
-        </motion.div>
-      </motion.div>
+        </div>
+      </section>
 
-      <div id="section-about" className="relative bg-white/70 backdrop-blur-sm snap-start z-[30]">
-        <ParallaxSection zIndex={30} className="py-32" containerRef={containerRef}>
-          <div className="max-w-6xl mx-auto px-4 md:px-8">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div>
-                <h2 className="text-4xl md:text-5xl font-bold text-slate-800 mb-6">
-                  Combating <span className="text-purple-600">Antibiotic Resistance</span> with AI
-                </h2>
-                <p className="text-slate-600 text-lg leading-relaxed mb-6">
-                  Zenthera leverages advanced machine learning algorithms and k-mer frequency analysis to predict antimicrobial resistance (AMR) patterns in bacterial pathogens. Our platform bridges the gap between genomic data and clinical decision-making.
-                </p>
-                <p className="text-slate-600 text-lg leading-relaxed">
-                  By replacing traditional 48-hour culture-based susceptibility testing with near-instant computational predictions, we empower clinicians and researchers to make time-critical decisions in the fight against resistant infections.
-                </p>
-              </div>
-              <div className="relative group cursor-pointer">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-100 to-slate-100 rounded-3xl transform rotate-3 transition-transform group-hover:rotate-6" />
-                <div className="relative bg-white/60 backdrop-blur-lg p-8 rounded-3xl shadow-xl border border-white/50 transition-transform group-hover:-translate-y-2">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="text-center p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
-                      <div className="text-3xl font-bold text-slate-400 mb-1">48hrs</div>
-                      <div className="text-xs text-slate-500 uppercase tracking-wide font-mono">Traditional</div>
-                    </div>
-                    <div className="text-center p-4 bg-purple-50 rounded-xl border-2 border-purple-100 hover:bg-purple-100 transition-colors">
-                      <div className="text-3xl font-bold text-purple-600 mb-1">{'<2min'}</div>
-                      <div className="text-xs text-slate-500 uppercase tracking-wide font-mono">Zenthera</div>
-                    </div>
-                    <div className="text-center p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
-                      <div className="text-3xl font-bold text-slate-400 mb-1">85%</div>
-                      <div className="text-xs text-slate-500 uppercase tracking-wide font-mono">Standard</div>
-                    </div>
-                    <div className="text-center p-4 bg-purple-50 rounded-xl border-2 border-purple-100 hover:bg-purple-100 transition-colors">
-                      <div className="text-3xl font-bold text-purple-600 mb-1">94%</div>
-                      <div className="text-xs text-slate-500 uppercase tracking-wide font-mono">Precision</div>
+      {/* Highlights Section */}
+      <section className="relative py-48 bg-white overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
+          <div className="space-y-48">
+            <div className="grid lg:grid-cols-2 gap-24 items-center">
+              <FadeInWhenVisible>
+                <div className="relative">
+                  <div className="absolute -inset-12 bg-brand-orange/5 rounded-[4rem] blur-3xl"></div>
+                  <div className="relative bg-white p-12 rounded-[3rem] border border-slate-100 shadow-2xl aspect-video flex items-center justify-center overflow-hidden">
+                    <Dna className="w-48 h-48 text-brand-orange opacity-10 animate-pulse" />
+                    <div className="absolute inset-0 flex items-center justify-center flex-col gap-6">
+                        <div className="w-64 h-2 bg-slate-100 rounded-full overflow-hidden">
+                          <motion.div initial={{ width: 0 }} whileInView={{ width: '80%' }} transition={{ duration: 3, repeat: Infinity }} className="h-full bg-brand-orange"></motion.div>
+                        </div>
+                        <div className="text-xs font-mono text-slate-400 tracking-widest">ANALYZING GENOME...</div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </ParallaxSection>
-      </div>
-
-      <div id="section-features" className="relative bg-slate-50/70 backdrop-blur-sm snap-start z-[35]">
-        <ParallaxSection zIndex={35} className="py-32" containerRef={containerRef}>
-          <div className="max-w-6xl mx-auto px-4 md:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-slate-800 mb-4">Platform Features</h2>
-              <p className="text-slate-600 max-w-2xl mx-auto text-lg">Comprehensive genomic analysis tools designed for modern clinical and research environments.</p>
+              </FadeInWhenVisible>
+              <FadeInWhenVisible delay={0.2}>
+                <div>
+                  <div className="text-brand-orange font-bold uppercase tracking-widest text-sm mb-6">Vigilance</div>
+                  <h2 className="text-6xl font-bold mb-8 leading-tight">FASTA Sequence Analysis</h2>
+                  <p className="text-2xl text-slate-600 leading-relaxed mb-10 font-light">Our advanced processing engine extracts structural variants and k-mer signatures from raw genomic data with near-zero latency.</p>
+                  <button className="px-12 py-6 bg-slate-900 text-white rounded-full font-bold hover:bg-brand-orange transition-all shadow-xl shadow-brand-orange/10 uppercase text-xs tracking-widest">Explore Platform</button>
+                </div>
+              </FadeInWhenVisible>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {features.map((feature, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1 }}
-                  whileHover={{ y: -12, scale: 1.02 }}
-                  className="bg-white/60 backdrop-blur-lg p-8 rounded-3xl shadow-lg border border-white/50 hover:shadow-2xl hover:border-purple-200 transition-all group"
-                >
-                  <div className="mb-6 group-hover:scale-125 transition-transform duration-500">
-                    <feature.icon />
+            <div className="grid lg:grid-cols-2 gap-24 items-center">
+              <FadeInWhenVisible className="order-2 lg:order-1">
+                <div>
+                  <div className="text-brand-orange font-bold uppercase tracking-widest text-sm mb-6">Vengeance</div>
+                  <h2 className="text-6xl font-bold mb-8 leading-tight">Predictive AI Intelligence</h2>
+                  <p className="text-2xl text-slate-600 leading-relaxed mb-10 font-light">Up to 94% precision across 35 major antibiotic classes, providing actionable clinical insights for immediate intervention.</p>
+                  <ul className="space-y-6">
+                    {['Random Forest Classifiers', 'Susceptibility Scoring', 'Mechanism Detection'].map((item, idx) => (
+                      <motion.li 
+                        key={idx} 
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: idx * 0.1 }}
+                        className="flex items-center gap-4 text-slate-700 text-lg"
+                      >
+                        <div className="w-6 h-6 rounded-full bg-brand-orange/10 flex items-center justify-center">
+                          <div className="w-2 h-2 bg-brand-orange rounded-full"></div>
+                        </div>
+                        {item}
+                      </motion.li>
+                    ))}
+                  </ul>
+                </div>
+              </FadeInWhenVisible>
+              <FadeInWhenVisible delay={0.2} className="order-1 lg:order-2">
+                <div className="relative bg-slate-900 rounded-[3rem] p-12 aspect-video flex items-center justify-center overflow-hidden shadow-2xl">
+                  <div className="grid grid-cols-4 gap-6 w-full">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <motion.div key={i} initial={{ opacity: 0.1 }} whileInView={{ opacity: [0.1, 0.8, 0.1] }} transition={{ duration: 2, delay: i * 0.1, repeat: Infinity }} className="h-16 bg-brand-orange/20 rounded-xl" />
+                    ))}
                   </div>
-                  <h3 className="text-xl font-bold text-slate-800 mb-3 group-hover:text-purple-600 transition-colors">{feature.title}</h3>
-                  <p className="text-slate-600 text-sm leading-relaxed">{feature.desc}</p>
-                </motion.div>
-              ))}
+                </div>
+              </FadeInWhenVisible>
             </div>
           </div>
-        </ParallaxSection>
-      </div>
+        </div>
+      </section>
 
-      <div id="section-workflow" className="relative bg-white/70 backdrop-blur-sm snap-start z-[40]">
-        <ParallaxSection zIndex={40} className="py-32" containerRef={containerRef}>
-          <div className="max-w-6xl mx-auto px-4 md:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-slate-800 mb-4">How It Works</h2>
-              <p className="text-slate-600 text-lg">Streamlined workflow from genomic data to clinical insights.</p>
-            </div>
+      {/* Workflow Section */}
+      <section className="bg-slate-900 text-white py-48 relative overflow-hidden">
+        {/* Subtle grid for dark mode */}
+        <div className="absolute inset-0 z-0 opacity-[0.05]"
+          style={{
+            backgroundSize: '60px 60px',
+            backgroundImage: `linear-gradient(to right, white 1px, transparent 1px),
+                             linear-gradient(to bottom, white 1px, transparent 1px)`,
+          }}
+        />
 
-            <div className="grid md:grid-cols-4 gap-8 relative">
+        <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-24 gap-8">
+            <FadeInWhenVisible>
+              <div className="text-brand-orange font-bold uppercase tracking-widest text-sm mb-6">Workflow</div>
+              <h2 className="text-6xl font-bold">How To Work With Us</h2>
+            </FadeInWhenVisible>
+            <FadeInWhenVisible delay={0.2}>
+              <p className="text-slate-400 text-xl max-w-sm font-light">A streamlined process from genomic sequence to clinical insight.</p>
+            </FadeInWhenVisible>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-12 relative">
+            <div className="hidden md:block absolute top-12 left-0 right-0 h-px bg-slate-800"></div>
+            {[
+              { step: "01", title: "Sequence Upload", desc: "Securely upload your FASTA or FNA genome files to our HIPAA-compliant nodes." },
+              { step: "02", title: "AI Extraction", desc: "Our engine signatures k-mers and structural variants automatically." },
+              { step: "03", title: "AMR Prediction", desc: "Real-time susceptibility calculation for 35+ drug classes." },
+              { step: "04", title: "Export Report", desc: "Download detailed clinical PDF reports for your local diagnostics." }
+            ].map((item, idx) => (
               <motion.div 
-                className="hidden md:block absolute top-12 left-[10%] right-[10%] h-0.5 bg-gradient-to-r from-purple-200 via-purple-400 to-purple-200"
-                initial={{ scaleX: 0 }}
-                whileInView={{ scaleX: 1 }}
+                key={idx} 
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 1.5, ease: "easeInOut" }}
-                style={{ transformOrigin: "left" }}
-              />
-              
-              {workflow.map((item, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 50 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.15, duration: 0.6 }}
-                  className="relative z-10 text-center group"
-                >
-                  <div className="w-24 h-24 mx-auto bg-white/60 backdrop-blur-lg rounded-full border-4 border-slate-50 flex items-center justify-center mb-6 shadow-xl text-3xl font-bold text-purple-600 group-hover:scale-110 group-hover:border-purple-200 transition-all">
-                    {item.step}
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-800 mb-3">{item.title}</h3>
-                  <p className="text-slate-600 text-sm leading-relaxed">{item.desc}</p>
-                </motion.div>
-              ))}
+                transition={{ delay: idx * 0.15 }}
+                className="relative z-10 group"
+              >
+                <div className="w-24 h-24 bg-slate-900 border border-slate-700 rounded-3xl flex items-center justify-center mb-8 group-hover:border-brand-orange group-hover:shadow-[0_0_30px_rgba(241,90,36,0.2)] transition-all">
+                  <span className="text-4xl font-bold text-brand-orange">{item.step}</span>
+                </div>
+                <h3 className="text-2xl font-bold mb-4">{item.title}</h3>
+                <p className="text-slate-400 leading-relaxed font-light">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-white border-t border-slate-100 pt-32 pb-16 relative z-10">
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
+          <div className="grid md:grid-cols-4 gap-16 mb-24">
+            <div className="col-span-2">
+               <div className="flex items-center gap-3 mb-10">
+                <div className="w-10 h-10 bg-brand-orange rounded-xl flex items-center justify-center shadow-lg shadow-brand-orange/20">
+                  <span className="text-white font-bold text-2xl">Z</span>
+                </div>
+                <span className="text-3xl font-bold tracking-tight text-slate-900 font-serif italic text-[2.5rem]">Zenthera<span className="text-brand-orange">AI</span></span>
+              </div>
+              <p className="text-slate-500 text-xl font-light max-w-sm mb-10 leading-relaxed">Empowering clinical diagnostics with predictive AI and high-performance computational biology.</p>
+            </div>
+            <div>
+              <h4 className="font-bold mb-8 uppercase tracking-widest text-[10px] text-slate-400">Platform</h4>
+              <ul className="space-y-6 text-slate-600 font-medium">
+                <li className="hover:text-brand-orange cursor-pointer transition-colors">AMR Prediction</li>
+                <li className="hover:text-brand-orange cursor-pointer transition-colors">FASTA Analysis</li>
+                <li className="hover:text-brand-orange cursor-pointer transition-colors">Clinical Reports</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold mb-8 uppercase tracking-widest text-[10px] text-slate-400">Company</h4>
+              <ul className="space-y-6 text-slate-600 font-medium">
+                <li className="hover:text-brand-orange cursor-pointer transition-colors">About Us</li>
+                <li className="hover:text-brand-orange cursor-pointer transition-colors">Documentation</li>
+                <li className="hover:text-brand-orange cursor-pointer transition-colors">Contact</li>
+              </ul>
             </div>
           </div>
-        </ParallaxSection>
-      </div>
-
-      <div className="relative bg-gradient-to-br from-slate-50/60 to-purple-50/20 backdrop-blur-sm snap-start z-[45]">
-        <ParallaxSection zIndex={45} className="py-32" containerRef={containerRef}>
-          <div className="max-w-6xl mx-auto px-4 md:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-slate-800 mb-4">Trusted by Researchers</h2>
-              <p className="text-slate-600 text-lg">Join leading institutions using Zenthera for AMR surveillance.</p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              {reviews.map((review, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 50, rotateX: 10 }}
-                  whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
-                  viewport={{ once: true, margin: "-50px" }}
-                  transition={{ delay: idx * 0.1, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                  whileHover={{ y: -10, transition: { duration: 0.3 } }}
-                  className="bg-white/60 backdrop-blur-lg p-10 rounded-3xl shadow-lg border border-white/50 relative group hover:shadow-2xl transition-all"
-                  style={{ transformPerspective: 1000 }}
-                >
-                  <div className="text-purple-300 text-8xl absolute -top-8 left-4 font-serif opacity-30 group-hover:opacity-50 transition-opacity select-none">"</div>
-                  <p className="text-slate-700 italic mb-8 relative z-10 text-lg leading-relaxed font-light">{review.quote}</p>
-                  <div className="border-t border-slate-100 pt-6">
-                    <div className="font-bold text-slate-900 text-lg">{review.author}</div>
-                    <div className="text-sm text-purple-600 font-semibold tracking-wider uppercase">{review.role}</div>
-                    <div className="text-xs text-slate-400 font-mono uppercase tracking-widest mt-2">{review.org}</div>
-                  </div>
-                </motion.div>
-              ))}
+          <div className="pt-12 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center text-sm text-slate-400 gap-6">
+            <p>© 2024 Zenthera AI. All rights reserved.</p>
+            <div className="flex gap-8">
+              <span className="hover:text-brand-orange cursor-pointer transition-colors">Privacy</span>
+              <span className="hover:text-brand-orange cursor-pointer transition-colors">Terms</span>
             </div>
           </div>
-        </ParallaxSection>
-      </div>
+        </div>
+      </footer>
 
-      <div className="relative bg-slate-950 snap-start z-[50]">
-        <ParallaxSection zIndex={50} className="py-20 text-slate-400" containerRef={containerRef}>
-          <div className="max-w-6xl mx-auto px-4 md:px-8">
-            <div className="grid md:grid-cols-3 gap-12 border-b border-slate-800/50 pb-12 mb-8">
-              <div>
-                <div className="text-2xl font-bold text-white mb-4 tracking-tight">Zenthera</div>
-                <p className="text-sm leading-relaxed max-w-xs text-slate-400">
-                  Pioneering machine learning solutions for antimicrobial resistance tracking and prediction.
-                </p>
-              </div>
-              <div className="space-y-3">
-                <h4 className="text-white font-medium mb-4">Platform</h4>
-                <button onClick={() => navigate('/dashboard')} className="text-sm hover:text-white transition-colors block w-full text-left">Analysis Dashboard</button>
-                <button onClick={() => scrollToSection('section-features')} className="text-sm hover:text-white transition-colors block w-full text-left">Features</button>
-                <button onClick={() => scrollToSection('section-about')} className="text-sm hover:text-white transition-colors block w-full text-left">About Us</button>
-              </div>
-              <div className="space-y-3">
-                <h4 className="text-white font-medium mb-4">Company</h4>
-                <div className="text-sm hover:text-white cursor-pointer transition-colors block">Documentation</div>
-                <div className="text-sm hover:text-white cursor-pointer transition-colors block">API Reference</div>
-                <div className="text-sm hover:text-white cursor-pointer transition-colors block">Privacy Policy</div>
-              </div>
-            </div>
-            <div className="flex flex-col md:flex-row justify-between items-center text-xs text-slate-500">
-              <p>© 2024 Zenthera AI. All rights reserved.</p>
-              <div className="flex gap-4 mt-4 md:mt-0">
-                <span className="hover:text-white cursor-pointer transition-colors">Twitter</span>
-                <span className="hover:text-white cursor-pointer transition-colors">LinkedIn</span>
-                <span className="hover:text-white cursor-pointer transition-colors">GitHub</span>
-              </div>
-            </div>
-          </div>
-        </ParallaxSection>
-      </div>
-
+      <div className="grain-overlay" />
     </div>
   );
 };
