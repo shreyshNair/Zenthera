@@ -144,11 +144,11 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white selection:bg-brand-orange selection:text-white">
+    <div className="min-h-screen bg-white dark:bg-dark-bg selection:bg-brand-orange selection:text-white transition-colors duration-500">
       <Navbar />
 
       {/* Page Header */}
-      <header className="pt-32 pb-16 border-b border-slate-100 bg-slate-50/50">
+      <header className="pt-32 pb-16 border-b border-slate-100 dark:border-dark-border bg-slate-50/50 dark:bg-dark-surface/30">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -160,10 +160,10 @@ const Dashboard: React.FC = () => {
                 <Activity className="w-5 h-5" />
                 <span>Diagnostic Portal</span>
               </div>
-              <h1 className="text-5xl md:text-7xl font-serif italic text-slate-900 leading-none">
+              <h1 className="text-5xl md:text-7xl font-serif italic text-slate-900 dark:text-white leading-none">
                 {activeTab === 'vigilance' ? 'Vigilance' : 'Vengeance'}
               </h1>
-              <p className="mt-6 text-xl text-slate-500 max-w-2xl font-light">
+              <p className="mt-6 text-xl text-slate-500 dark:text-slate-400 max-w-2xl font-light">
                 {activeTab === 'vigilance' 
                   ? 'Advanced processing engine for raw genomic data and k-mer signature extraction.' 
                   : 'Actionable resistance predictions and susceptibility intelligence.'}
@@ -181,13 +181,13 @@ const Dashboard: React.FC = () => {
               >
                 Vigilance
               </button>
-              <button 
+                  <button 
                 onClick={() => setActiveTab('vengeance')}
                 disabled={results.length === 0}
                 className={`px-8 py-4 rounded-full text-sm font-bold tracking-wider uppercase transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
                   activeTab === 'vengeance' 
-                    ? 'bg-slate-900 text-white' 
-                    : 'bg-white text-slate-600 border border-slate-200 hover:border-brand-orange'
+                    ? 'bg-slate-900 dark:bg-brand-orange text-white' 
+                    : 'bg-white dark:bg-dark-surface text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-dark-border hover:border-brand-orange'
                 }`}
               >
                 Vengeance
@@ -226,7 +226,7 @@ const Dashboard: React.FC = () => {
                   className={`relative aspect-[16/9] lg:aspect-auto lg:h-[400px] rounded-[40px] border-2 border-dashed transition-all duration-500 flex flex-col items-center justify-center p-12 overflow-hidden ${
                     isDragging 
                       ? 'border-brand-orange bg-brand-orange/5 scale-[1.01]' 
-                      : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-brand-orange/50'
+                      : 'border-slate-200 dark:border-dark-border bg-slate-50/50 dark:bg-dark-surface/50 hover:bg-slate-50 dark:hover:bg-dark-surface hover:border-brand-orange/50'
                   }`}
                 >
                   <input 
@@ -236,11 +236,11 @@ const Dashboard: React.FC = () => {
                     disabled={isAnalyzing}
                   />
                   
-                  <div className="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mb-8">
+                  <div className="w-20 h-20 bg-white dark:bg-dark-bg rounded-3xl shadow-xl flex items-center justify-center mb-8">
                     <Upload className={`w-8 h-8 transition-colors ${isDragging ? 'text-brand-orange' : 'text-slate-400'}`} />
                   </div>
                   
-                  <h3 className="text-3xl font-bold text-slate-900 mb-4">Drop Sequence Data</h3>
+                  <h3 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">Drop Sequence Data</h3>
                   <p className="text-slate-500 text-center max-w-sm mb-8">
                     Select <span className="text-brand-orange font-mono">.fasta</span>, <span className="text-brand-orange font-mono">.fna</span>, or <span className="text-brand-orange font-mono">.fa</span> genomic files for analysis.
                   </p>
@@ -301,12 +301,12 @@ const Dashboard: React.FC = () => {
                    </div>
                 </div>
 
-                <div className="bg-slate-50 rounded-[3rem] p-10 border border-slate-100">
-                  <h4 className="text-xl font-bold mb-6 flex items-center gap-3">
+                <div className="bg-slate-50 dark:bg-dark-surface rounded-[3rem] p-10 border border-slate-100 dark:border-dark-border">
+                  <h4 className="text-xl font-bold mb-6 flex items-center gap-3 dark:text-white">
                     <Info className="text-brand-orange w-5 h-5" />
                     Security Protocol
                   </h4>
-                  <p className="text-slate-600 leading-relaxed text-sm">
+                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm">
                     All genomic data is processed within an isolated sandbox. We do not store sequences after analysis unless explicitly requested for research collaboration.
                   </p>
                 </div>
@@ -363,7 +363,7 @@ const Dashboard: React.FC = () => {
                 {/* Main Predictions Table */}
                 <div className="space-y-6">
                   <div className="flex flex-col md:flex-row items-center justify-between gap-6 px-6">
-                    <h3 className="text-3xl font-serif italic text-slate-900">Resistance Profile</h3>
+                    <h3 className="text-3xl font-serif italic text-slate-900 dark:text-white">Resistance Profile</h3>
                     
                     <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
                       {/* Search Bar */}
@@ -376,20 +376,20 @@ const Dashboard: React.FC = () => {
                           placeholder="Search antibiotic..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/20 focus:border-brand-orange transition-all font-medium"
+                          className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-dark-surface border border-slate-100 dark:border-dark-border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/20 focus:border-brand-orange transition-all font-medium dark:text-white"
                         />
                       </div>
 
                       {/* Filters */}
-                      <div className="flex bg-slate-50 p-1 rounded-full border border-slate-100">
+                      <div className="flex bg-slate-50 dark:bg-dark-surface p-1 rounded-full border border-slate-100 dark:border-dark-border">
                         {(['all', 'resistant', 'susceptible'] as const).map((f) => (
                           <button
                             key={f}
                             onClick={() => setFilter(f)}
                             className={`px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
                               filter === f 
-                                ? 'bg-white text-slate-900 shadow-sm' 
-                                : 'text-slate-400 hover:text-slate-600'
+                                ? 'bg-white dark:bg-brand-orange text-slate-900 dark:text-white shadow-sm' 
+                                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
                             }`}
                           >
                             {f}
@@ -413,7 +413,7 @@ const Dashboard: React.FC = () => {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.05 }}
                           whileHover={{ y: -5, scale: 1.02 }}
-                          className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-slate-200/50 transition-all relative overflow-hidden group"
+                          className="bg-white dark:bg-dark-surface p-8 rounded-[2.5rem] border border-slate-100 dark:border-dark-border shadow-sm hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-brand-orange/10 transition-all relative overflow-hidden group"
                         >
                           {/* Status Background Glow */}
                           <div className={`absolute -right-12 -top-12 w-32 h-32 rounded-full blur-[60px] opacity-10 transition-opacity group-hover:opacity-20 ${
@@ -424,22 +424,22 @@ const Dashboard: React.FC = () => {
                             <div className="flex items-center gap-4">
                               <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold shadow-inner ${
                                 r.prediction === 'Resistant' 
-                                  ? 'bg-red-50 text-red-600' 
+                                  ? 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400' 
                                   : 'bg-brand-orange/10 text-brand-orange'
                               }`}>
                                 {r.antibiotic.substring(0, 2).toUpperCase()}
                               </div>
                               <div>
-                                <h4 className="text-xl font-bold text-slate-900 group-hover:text-brand-orange transition-colors">
+                                <h4 className="text-xl font-bold text-slate-900 dark:text-white group-hover:text-brand-orange transition-colors">
                                   {r.antibiotic}
                                 </h4>
                                 <div className="flex items-center gap-2 mt-1">
                                   {r.mechanism ? (
-                                    <span className="text-[10px] font-bold text-red-500/80 uppercase tracking-widest flex items-center gap-1">
+                                    <span className="text-[10px] font-bold text-red-500/80 dark:text-red-400/80 uppercase tracking-widest flex items-center gap-1">
                                       <ShieldAlert className="w-3 h-3" /> {r.mechanism}
                                     </span>
                                   ) : (
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1">
                                       <Cpu className="w-3 h-3" /> ML Pattern
                                     </span>
                                   )}
@@ -448,8 +448,8 @@ const Dashboard: React.FC = () => {
                             </div>
                             <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] shadow-sm ${
                               r.prediction === 'Resistant' 
-                                ? 'bg-red-600 text-white ring-4 ring-red-50' 
-                                : 'bg-brand-orange text-white ring-4 ring-orange-50'
+                                ? 'bg-red-600 text-white ring-4 ring-red-50 dark:ring-red-900/20' 
+                                : 'bg-brand-orange text-white ring-4 ring-orange-50 dark:ring-orange-900/20'
                             }`}>
                               {r.prediction}
                             </div>
@@ -458,12 +458,12 @@ const Dashboard: React.FC = () => {
                           <div className="space-y-4">
                             <div className="flex justify-between items-end">
                               <div className="flex flex-col">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Confidence Score</span>
-                                <span className="text-xs font-bold text-slate-300 uppercase tracking-tighter">{r.confidence_tier} TRUST</span>
+                                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Confidence Score</span>
+                                <span className="text-xs font-bold text-slate-300 dark:text-slate-600 uppercase tracking-tighter">{r.confidence_tier} TRUST</span>
                               </div>
-                              <span className="text-2xl font-mono font-bold text-slate-900">{r.confidence}%</span>
+                              <span className="text-2xl font-mono font-bold text-slate-900 dark:text-white">{r.confidence}%</span>
                             </div>
-                            <div className="h-2.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100 p-0.5">
+                            <div className="h-2.5 bg-slate-50 dark:bg-dark-bg rounded-full overflow-hidden border border-slate-100 dark:border-dark-border p-0.5">
                               <motion.div 
                                 initial={{ width: 0 }}
                                 animate={{ width: `${r.confidence}%` }}
@@ -473,7 +473,7 @@ const Dashboard: React.FC = () => {
                                 }`}
                               />
                             </div>
-                            <div className="flex justify-between items-center pt-2 text-[9px] font-mono font-bold text-slate-300 uppercase tracking-widest">
+                            <div className="flex justify-between items-center pt-2 text-[9px] font-mono font-bold text-slate-300 dark:text-slate-600 uppercase tracking-widest">
                                <span>MODEL_ID: {r.model.toUpperCase()}</span>
                                <span>RES_CORE_01</span>
                             </div>

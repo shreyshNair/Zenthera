@@ -2,6 +2,11 @@
 # config.py — Central configuration for Zenthera AMR Pipeline
 # ============================================================
 
+import os
+
+# Base directory for the AI model code (the directory containing this file)
+BASE_AI_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # BV-BRC API base URL
 API_BASE_URL = "https://www.bv-brc.org/api"
 
@@ -65,23 +70,27 @@ LR_PARAMS = {
 # ──────────────────────────────────────────────────────────────
 # Paths
 # ──────────────────────────────────────────────────────────────
-DATA_DIR = "data"
-MODELS_DIR = "models"
-LOGS_DIR = "logs"
-RAW_DATA_FILE = f"{DATA_DIR}/amr_raw.csv"
-PROCESSED_DATA_FILE = f"{DATA_DIR}/amr_processed.csv"
-FEATURES_FILE = f"{DATA_DIR}/amr_features.npz"
-LABEL_ENCODER_FILE = f"{MODELS_DIR}/label_encoder.joblib"
-VECTORIZER_FILE = f"{MODELS_DIR}/kmer_vectorizer.joblib"
-RF_MODEL_FILE = f"{MODELS_DIR}/random_forest.joblib"
-LR_MODEL_FILE = f"{MODELS_DIR}/logistic_regression.joblib"
-REPORT_FILE = f"{LOGS_DIR}/training_report.txt"
+DATA_DIR = os.path.join(BASE_AI_DIR, "data")
+MODELS_DIR = os.path.join(BASE_AI_DIR, "models")
+LOGS_DIR = os.path.join(BASE_AI_DIR, "logs")
+
+RAW_DATA_FILE = os.path.join(DATA_DIR, "amr_raw.csv")
+PROCESSED_DATA_FILE = os.path.join(DATA_DIR, "amr_processed.csv")
+FEATURES_FILE = os.path.join(DATA_DIR, "amr_features.npz")
+
+LABEL_ENCODER_FILE = os.path.join(MODELS_DIR, "label_encoder.joblib")
+VECTORIZER_FILE = os.path.join(MODELS_DIR, "kmer_vectorizer.joblib")
+RF_MODEL_FILE = os.path.join(MODELS_DIR, "random_forest.joblib")
+LR_MODEL_FILE = os.path.join(MODELS_DIR, "logistic_regression.joblib")
+
+REPORT_FILE = os.path.join(LOGS_DIR, "training_report.txt")
 
 # ──────────────────────────────────────────────────────────────
 # CARD Resistance Gene Database
 # ──────────────────────────────────────────────────────────────
-CARD_DIR = f"{DATA_DIR}/card"
-CARD_INDEX_FILE = f"{CARD_DIR}/gene_index.json"
+CARD_DIR = os.path.join(DATA_DIR, "card")
+CARD_INDEX_FILE = os.path.join(CARD_DIR, "gene_index.json")
 CARD_DOWNLOAD_URL = "https://card.mcmaster.ca/latest/data"
 GENE_KMER_SIZE = 21            # k-mer size for gene detection
 GENE_DETECT_THRESHOLD = 0.60   # min fraction of gene k-mers to call detected
+

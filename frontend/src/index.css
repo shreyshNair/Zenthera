@@ -11,6 +11,13 @@
   --color-surface-glass: rgba(255,255,255,0.08);
   --font-serif: 'Playfair Display', Georgia, serif;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Dark Mode specific colors */
+  --color-dark-bg: #0A0A0F;
+  --color-dark-surface: #12121A;
+  --color-dark-border: #1E1E2D;
+  --color-dark-text: #E2E8F0;
+  --color-dark-muted: #94A3B8;
 }
 
 @layer base {

@@ -38,6 +38,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GroupKFold, cross_validate
 from sklearn.utils.class_weight import compute_class_weight
+from sklearn.calibration import CalibratedClassifierCV
 
 from config import (
     FEATURES_FILE,
@@ -196,10 +197,21 @@ def main() -> None:
     class_weights = compute_weights(y)
     log.info(f"Class weights: {class_weights}")
 
-    # ── Random Forest ──────────────────────────────────────────────────────────
-    rf = RandomForestClassifier(**RF_PARAMS, class_weight="balanced")
-    rf_cv = cross_validate_model("Random Forest", rf, X, y, genome_ids)
-    train_and_save("Random Forest", rf, X, y, RF_MODEL_FILE)
+    # ── Random Forest (with Calibration) ───────────────────────────────────────
+    log.info("\nTraining Calibrated Random Forest ...")
+    rf_base = RandomForestClassifier(**RF_PARAMS, class_weight="balanced")
+    
+    # We use cv='prefit' if we already fit it, but here we want to cross-validate the calibration too
+    # However, since we use GroupKFold, we'll calibrate on the full set after CV
+    rf_cv = cross_validate_model("Random Forest (Base)", rf_base, X, y, genome_ids)
+    
+    log.info("Fitting and calibrating Random Forest on full dataset ...")
+    rf_base.fit(X, y)
+    rf = CalibratedClassifierCV(rf_base, method='sigmoid', cv='prefit')
+    rf.fit(X, y)
+    
+    joblib.dump(rf, RF_MODEL_FILE, compress=3)
+    log.info(f"  Saved Calibrated RF → {RF_MODEL_FILE}")
 
     # ── Logistic Regression ────────────────────────────────────────────────────
     lr = LogisticRegression(**LR_PARAMS, class_weight="balanced")
