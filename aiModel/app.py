@@ -1003,7 +1003,14 @@ def predict():
             return jsonify({"error": "File is empty"}), 400
 
         # Run prediction
-        results = pipeline.predict_from_fasta_string(fasta_content)
+        try:
+            results = pipeline.predict_from_fasta_string(fasta_content)
+        except Exception as e:
+            log.error(f"Pipeline error: {e}")
+            return jsonify({"error": f"Prediction engine failed: {str(e)}"}), 500
+
+        if not results:
+            return jsonify({"error": "No valid genomic patterns detected in file. Please ensure it is a valid FASTA sequence."}), 400
 
         # Extract genome info from first result
         genome_info = {

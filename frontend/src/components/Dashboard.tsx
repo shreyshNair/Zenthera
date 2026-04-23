@@ -53,6 +53,8 @@ const Dashboard: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [clinicalData, setClinicalData] = useState<any>(null);
+  const [recommendations, setRecommendations] = useState<any>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -120,6 +122,9 @@ const Dashboard: React.FC = () => {
       }));
 
       setResults(dashboardResults);
+      setClinicalData(apiResult.clinical);
+      setRecommendations(apiResult.recommendation);
+      
       setIsAnalyzing(false);
       setTimeout(() => setActiveTab('vengeance'), 800);
 
@@ -309,80 +314,153 @@ const Dashboard: React.FC = () => {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-12"
             >
-              {/* Stats Overview */}
-              <div className="grid md:grid-cols-3 gap-8">
-                {[
-                  { label: "Resistant", val: results.filter(r => r.prediction === 'Resistant').length, color: "text-red-600", bg: "bg-red-50", icon: ShieldAlert },
-                  { label: "Susceptible", val: results.filter(r => r.prediction === 'Susceptible').length, color: "text-green-600", bg: "bg-green-50", icon: ShieldCheck },
-                  { label: "Confidence", val: genomeInfo ? `${genomeInfo.gc_pct}% GC` : "94.2%", color: "text-brand-orange", bg: "bg-brand-orange/5", icon: Cpu }
-                ].map((stat, idx) => (
-                  <div key={idx} className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm">
-                    <div className={`w-14 h-14 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center mb-6`}>
-                      <stat.icon className="w-7 h-7" />
+              {/* Results Overview */}
+              <div className="space-y-12 pb-24">
+                
+                {/* Clinical Context / Disease Name */}
+                {clinicalData && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-slate-900 rounded-[3rem] p-12 text-white shadow-2xl relative overflow-hidden"
+                  >
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-3 text-brand-orange mb-6 font-bold uppercase tracking-[0.2em] text-xs">
+                        <Activity className="w-5 h-5" />
+                        <span>Clinical Intelligence</span>
+                      </div>
+                      <h2 className="text-4xl md:text-6xl font-serif italic mb-6">{clinicalData.name}</h2>
+                      <div className="grid md:grid-cols-2 gap-12">
+                        <div>
+                          <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">Associated Pathologies</h4>
+                          <ul className="space-y-3">
+                            {clinicalData.diseases.map((d: string, i: number) => (
+                              <li key={i} className="flex items-center gap-3 text-slate-300">
+                                <div className="w-1.5 h-1.5 bg-brand-orange rounded-full" />
+                                {d}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">Clinical Notes</h4>
+                          <p className="text-slate-400 leading-relaxed italic">"{clinicalData.notes}"</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-5xl font-bold text-slate-900 mb-2">{stat.val}</div>
-                    <div className="text-sm font-bold uppercase tracking-widest text-slate-400">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
+                    <div className="absolute top-0 right-0 p-12 opacity-5">
+                      <ShieldCheck className="w-64 h-64" />
+                    </div>
+                  </motion.div>
+                )}
 
-              {/* Results Table */}
-              <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
-                <div className="px-12 py-8 border-b border-slate-100 flex items-center justify-between">
-                   <h3 className="text-2xl font-bold text-slate-900">Resistance Profile</h3>
-                   <div className="flex gap-4">
-                      <button className="flex items-center gap-2 px-6 py-3 border border-slate-200 rounded-full text-xs font-bold uppercase tracking-widest hover:border-brand-orange transition-all">
-                        <Download className="w-4 h-4" /> Export
-                      </button>
-                      <button onClick={() => {setResults([]); setActiveTab('vigilance');}} className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-brand-orange transition-all">
-                        <RotateCcw className="w-4 h-4" /> New Scan
-                      </button>
-                   </div>
+                {/* Main Predictions with Pros/Cons */}
+                <div className="space-y-6">
+                  <h3 className="text-2xl font-bold text-slate-900 px-6">Antimicrobial Susceptibility Profile</h3>
+                  <div className="grid gap-6">
+                    {results.map((r, i) => (
+                      <motion.div 
+                        key={r.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 hover:shadow-md transition-all group"
+                      >
+                        <div className="flex flex-col md:flex-row justify-between gap-8">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-4 mb-4">
+                              <h4 className="text-2xl font-bold text-slate-900">{r.antibiotic}</h4>
+                              <div className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                                r.prediction === 'Resistant' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'
+                              }`}>
+                                {r.prediction}
+                              </div>
+                            </div>
+                            
+                            {/* Pros and Cons */}
+                            <div className="grid md:grid-cols-2 gap-6 mt-6">
+                              <div className="p-4 bg-green-50/50 rounded-2xl border border-green-100/50">
+                                <p className="text-[10px] font-bold text-green-600 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                  <ShieldCheck className="w-3 h-3" /> Potential Pros
+                                </p>
+                                <p className="text-xs text-slate-600 leading-relaxed">
+                                  {r.prediction === 'Susceptible' 
+                                    ? `High ML confidence (${r.confidence}%) for effective treatment. No known resistance markers detected in sequence.`
+                                    : "Possible secondary treatment option if primary fails."}
+                                </p>
+                              </div>
+                              <div className="p-4 bg-red-50/50 rounded-2xl border border-red-100/50">
+                                <p className="text-[10px] font-bold text-red-600 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                  <ShieldAlert className="w-3 h-3" /> Potential Cons
+                                </p>
+                                <p className="text-xs text-slate-600 leading-relaxed">
+                                  {r.prediction === 'Resistant'
+                                    ? `Critical resistance detected. ${r.mechanism === 'Deterministic Match' ? 'Deterministic gene marker identified in genomic profile.' : `AI predicts high probability of failure based on k-mer signatures (${r.confidence}%).`}`
+                                    : "Monitor for emerging resistance patterns."}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="md:w-48 flex flex-col justify-center items-end">
+                            <div className="text-right mb-2">
+                              <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Confidence</span>
+                              <div className="text-3xl font-bold text-brand-orange">{r.confidence}%</div>
+                            </div>
+                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                              <motion.div 
+                                initial={{ width: 0 }}
+                                animate={{ width: `${r.confidence}%` }}
+                                className="h-full bg-brand-orange"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
                 </div>
-                <div className="overflow-x-auto">
-                   <table className="w-full">
-                      <thead>
-                        <tr className="bg-slate-50/50 text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
-                          <th className="px-12 py-6 text-left">Antibiotic</th>
-                          <th className="px-12 py-6 text-left">Result</th>
-                          <th className="px-12 py-6 text-left">Confidence</th>
-                          <th className="px-12 py-6 text-left">Mechanism</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {results.map((r, i) => (
-                          <motion.tr 
-                            key={r.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.1 }}
-                            className="hover:bg-slate-50/50 transition-colors"
-                          >
-                            <td className="px-12 py-8 font-bold text-slate-900 text-lg">{r.antibiotic}</td>
-                            <td className="px-12 py-8">
-                               <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest ${
-                                 r.prediction === 'Resistant' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'
-                               }`}>
-                                  <div className={`w-2 h-2 rounded-full ${r.prediction === 'Resistant' ? 'bg-red-600 animate-pulse' : 'bg-green-600'}`} />
-                                  {r.prediction}
-                               </div>
-                            </td>
-                            <td className="px-12 py-8">
-                               <div className="flex items-center gap-4">
-                                  <div className="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                     <div className="h-full bg-brand-orange" style={{ width: `${r.confidence}%` }} />
-                                  </div>
-                                  <span className="font-mono text-sm text-slate-500">{r.confidence}%</span>
-                               </div>
-                            </td>
-                            <td className="px-12 py-8 font-mono text-sm text-brand-orange">
-                               {r.mechanism || <span className="text-slate-300 italic">-</span>}
-                            </td>
-                          </motion.tr>
-                        ))}
-                      </tbody>
-                   </table>
-                </div>
+
+                {/* Final Recommendation / Preferred Option */}
+                {recommendations && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-brand-orange rounded-[3rem] p-12 text-white shadow-2xl relative overflow-hidden"
+                  >
+                    <div className="relative z-10 text-center max-w-2xl mx-auto">
+                      <div className="inline-flex items-center gap-3 bg-white/10 px-6 py-2 rounded-full mb-8 font-bold uppercase tracking-[0.2em] text-[10px]">
+                        <Target className="w-4 h-4" />
+                        <span>Preferred Treatment Protocol</span>
+                      </div>
+                      
+                      {recommendations.first_line.length > 0 ? (
+                        <>
+                          <h3 className="text-4xl md:text-5xl font-serif italic mb-6">
+                            {recommendations.first_line[0].antibiotic} is highly recommended.
+                          </h3>
+                          <p className="text-white/80 leading-relaxed mb-8">
+                            Based on the genomic analysis and {genomeInfo?.matched_genus || 'organism'} profiling, 
+                            <span className="font-bold text-white"> {recommendations.first_line[0].antibiotic} </span> 
+                            shows the highest susceptibility confidence with minimal resistance risk.
+                          </p>
+                        </>
+                      ) : (
+                        <h3 className="text-3xl font-serif italic mb-6">No first-line antibiotics recommended.</h3>
+                      )}
+
+                      <div className="grid md:grid-cols-3 gap-4">
+                        <button className="bg-white text-brand-orange px-8 py-4 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all">
+                          Download Protocol
+                        </button>
+                        <button onClick={() => {setResults([]); setActiveTab('vigilance');}} className="bg-slate-900 text-white px-8 py-4 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-black transition-all">
+                          New Analysis
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
               </div>
             </motion.div>
           )}

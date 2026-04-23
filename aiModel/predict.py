@@ -629,9 +629,13 @@ class ZentheraPipeline:
 
         # Chunk the sequence into 10k bp chunks to scan the whole genome
         chunk_size = 10000
-        chunks = [seq[i:i+chunk_size] for i in range(0, len(seq), chunk_size) if len(seq[i:i+chunk_size]) >= 5000]
+        chunks = [seq[i:i+chunk_size] for i in range(0, len(seq), chunk_size) if len(seq[i:i+chunk_size]) >= 2000]
+        if not chunks and len(seq) > 0:
+            chunks = [seq] # fallback for very short sequences
+        
         if not chunks:
-            chunks = [seq] # fallback
+            log.warning("No valid chunks extracted from sequence")
+            return []
 
         try:
             res_idx = int(np.where(self.le.classes_ == "Resistant")[0][0])
