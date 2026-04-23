@@ -56,6 +56,9 @@ const Dashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [clinicalData, setClinicalData] = useState<any>(null);
   const [recommendations, setRecommendations] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filter, setFilter] = useState<'all' | 'resistant' | 'susceptible'>('all');
+
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -112,15 +115,17 @@ const Dashboard: React.FC = () => {
 
       setGenomeInfo(apiResult.genome);
       
-      const dashboardResults: DashboardResult[] = apiResult.predictions.map((p, idx) => ({
-        id: idx.toString(),
-        antibiotic: p.antibiotic,
-        prediction: p.phenotype,
-        confidence: p.confidence,
-        model: p.model,
-        confidence_tier: p.confidence_tier,
-        mechanism: p.det_found ? 'Deterministic Match' : undefined
-      }));
+      const dashboardResults: DashboardResult[] = apiResult.predictions
+        .filter((p: any) => p.phenotype !== 'Insufficient Data')
+        .map((p: any, idx: number) => ({
+          id: idx.toString(),
+          antibiotic: p.antibiotic,
+          prediction: p.phenotype,
+          confidence: p.confidence,
+          model: p.model,
+          confidence_tier: p.confidence_tier,
+          mechanism: p.det_found ? p.det_type : undefined
+        }));
 
       setResults(dashboardResults);
       setClinicalData(apiResult.clinical);
@@ -355,71 +360,128 @@ const Dashboard: React.FC = () => {
                   </motion.div>
                 )}
 
-                {/* Main Predictions with Pros/Cons */}
+                {/* Main Predictions Table */}
                 <div className="space-y-6">
-                  <h3 className="text-2xl font-bold text-slate-900 px-6">Antimicrobial Susceptibility Profile</h3>
-                  <div className="grid gap-6">
-                    {results.map((r, i) => (
-                      <motion.div 
-                        key={r.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.05 }}
-                        className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 hover:shadow-md transition-all group"
-                      >
-                        <div className="flex flex-col md:flex-row justify-between gap-8">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-4 mb-4">
-                              <h4 className="text-2xl font-bold text-slate-900">{r.antibiotic}</h4>
-                              <div className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                                r.prediction === 'Resistant' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-6 px-6">
+                    <h3 className="text-3xl font-serif italic text-slate-900">Resistance Profile</h3>
+                    
+                    <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+                      {/* Search Bar */}
+                      <div className="relative flex-1 md:w-64">
+                        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                          <Activity className="w-4 h-4 text-slate-400" />
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Search antibiotic..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/20 focus:border-brand-orange transition-all font-medium"
+                        />
+                      </div>
+
+                      {/* Filters */}
+                      <div className="flex bg-slate-50 p-1 rounded-full border border-slate-100">
+                        {(['all', 'resistant', 'susceptible'] as const).map((f) => (
+                          <button
+                            key={f}
+                            onClick={() => setFilter(f)}
+                            className={`px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
+                              filter === f 
+                                ? 'bg-white text-slate-900 shadow-sm' 
+                                : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                          >
+                            {f}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {results
+                      .filter(r => {
+                        const matchesSearch = r.antibiotic.toLowerCase().includes(searchTerm.toLowerCase());
+                        const matchesFilter = filter === 'all' || r.prediction.toLowerCase() === filter;
+                        return matchesSearch && matchesFilter;
+                      })
+                      .map((r, i) => (
+                        <motion.div 
+                          key={r.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.05 }}
+                          whileHover={{ y: -5, scale: 1.02 }}
+                          className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-slate-200/50 transition-all relative overflow-hidden group"
+                        >
+                          {/* Status Background Glow */}
+                          <div className={`absolute -right-12 -top-12 w-32 h-32 rounded-full blur-[60px] opacity-10 transition-opacity group-hover:opacity-20 ${
+                            r.prediction === 'Resistant' ? 'bg-red-500' : 'bg-brand-orange'
+                          }`} />
+
+                          <div className="flex items-start justify-between mb-8">
+                            <div className="flex items-center gap-4">
+                              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold shadow-inner ${
+                                r.prediction === 'Resistant' 
+                                  ? 'bg-red-50 text-red-600' 
+                                  : 'bg-brand-orange/10 text-brand-orange'
                               }`}>
-                                {r.prediction}
+                                {r.antibiotic.substring(0, 2).toUpperCase()}
+                              </div>
+                              <div>
+                                <h4 className="text-xl font-bold text-slate-900 group-hover:text-brand-orange transition-colors">
+                                  {r.antibiotic}
+                                </h4>
+                                <div className="flex items-center gap-2 mt-1">
+                                  {r.mechanism ? (
+                                    <span className="text-[10px] font-bold text-red-500/80 uppercase tracking-widest flex items-center gap-1">
+                                      <ShieldAlert className="w-3 h-3" /> {r.mechanism}
+                                    </span>
+                                  ) : (
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                                      <Cpu className="w-3 h-3" /> ML Pattern
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                            
-                            {/* Pros and Cons */}
-                            <div className="grid md:grid-cols-2 gap-6 mt-6">
-                              <div className="p-4 bg-green-50/50 rounded-2xl border border-green-100/50">
-                                <p className="text-[10px] font-bold text-green-600 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                  <ShieldCheck className="w-3 h-3" /> Potential Pros
-                                </p>
-                                <p className="text-xs text-slate-600 leading-relaxed">
-                                  {r.prediction === 'Susceptible' 
-                                    ? `High ML confidence (${r.confidence}%) for effective treatment. No known resistance markers detected in sequence.`
-                                    : "Possible secondary treatment option if primary fails."}
-                                </p>
-                              </div>
-                              <div className="p-4 bg-red-50/50 rounded-2xl border border-red-100/50">
-                                <p className="text-[10px] font-bold text-red-600 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                  <ShieldAlert className="w-3 h-3" /> Potential Cons
-                                </p>
-                                <p className="text-xs text-slate-600 leading-relaxed">
-                                  {r.prediction === 'Resistant'
-                                    ? `Critical resistance detected. ${r.mechanism === 'Deterministic Match' ? 'Deterministic gene marker identified in genomic profile.' : `AI predicts high probability of failure based on k-mer signatures (${r.confidence}%).`}`
-                                    : "Monitor for emerging resistance patterns."}
-                                </p>
-                              </div>
+                            <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] shadow-sm ${
+                              r.prediction === 'Resistant' 
+                                ? 'bg-red-600 text-white ring-4 ring-red-50' 
+                                : 'bg-brand-orange text-white ring-4 ring-orange-50'
+                            }`}>
+                              {r.prediction}
                             </div>
                           </div>
 
-                          <div className="md:w-48 flex flex-col justify-center items-end">
-                            <div className="text-right mb-2">
-                              <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">Confidence</span>
-                              <div className="text-3xl font-bold text-brand-orange">{r.confidence}%</div>
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-end">
+                              <div className="flex flex-col">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Confidence Score</span>
+                                <span className="text-xs font-bold text-slate-300 uppercase tracking-tighter">{r.confidence_tier} TRUST</span>
+                              </div>
+                              <span className="text-2xl font-mono font-bold text-slate-900">{r.confidence}%</span>
                             </div>
-                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-2.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100 p-0.5">
                               <motion.div 
                                 initial={{ width: 0 }}
                                 animate={{ width: `${r.confidence}%` }}
-                                className="h-full bg-brand-orange"
+                                transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 }}
+                                className={`h-full rounded-full ${
+                                  r.prediction === 'Resistant' ? 'bg-red-400' : 'bg-brand-orange'
+                                }`}
                               />
                             </div>
+                            <div className="flex justify-between items-center pt-2 text-[9px] font-mono font-bold text-slate-300 uppercase tracking-widest">
+                               <span>MODEL_ID: {r.model.toUpperCase()}</span>
+                               <span>RES_CORE_01</span>
+                            </div>
                           </div>
-                        </div>
-                      </motion.div>
-                    ))}
+                        </motion.div>
+                      ))}
                   </div>
+
                 </div>
 
                 {/* Final Recommendation / Preferred Option */}

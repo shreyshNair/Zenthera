@@ -15,10 +15,10 @@ INDIA_ANTIBIOTICS = [
     "erythromycin", "levofloxacin", "imipenem", "gentamicin", "doxycycline",
     
     # New 20 (Commented out until re-training is complete to avoid feature mismatch)
-    # "amikacin", "tobramycin", "cefepime", "ceftazidime", "nitrofurantoin",
-    # "fosfomycin", "tigecycline", "aztreonam", "teicoplanin", "vancomycin",
-    # "linezolid", "clindamycin", "moxifloxacin", "cefotaxime", "cefuroxime",
-    # "metronidazole", "rifampicin", "isoniazid", "pyrazinamide", "ethambutol"
+    "amikacin", "tobramycin", "cefepime", "ceftazidime", "nitrofurantoin",
+    "fosfomycin", "tigecycline", "aztreonam", "teicoplanin", "vancomycin",
+    "linezolid", "clindamycin", "moxifloxacin", "cefotaxime", "cefuroxime",
+    "metronidazole", "rifampicin", "isoniazid", "pyrazinamide", "ethambutol"
 ]
 
 # ──────────────────────────────────────────────────────────────
@@ -47,9 +47,9 @@ RANDOM_STATE = 42
 
 RF_PARAMS = {
     "n_estimators": 300,
-    "max_depth": None,
-    "min_samples_split": 2,
-    "min_samples_leaf": 1,
+    "max_depth": 20,         # Cap depth to prevent extreme overfitting
+    "min_samples_split": 5,   # Require more samples to split
+    "min_samples_leaf": 2,    # Require more samples in leaves for smoother probabilities
     "n_jobs": -1,            # Use all CPU cores
     "random_state": RANDOM_STATE,
 }

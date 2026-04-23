@@ -557,6 +557,9 @@ class ZentheraPipeline:
         proba = clf.predict_proba(X)[0]
         phenotype = self.le.inverse_transform([label_idx])[0]
         confidence = float(proba[label_idx])
+        
+        # Cap ML confidence at 98.5% for realism
+        confidence = min(0.985, confidence)
 
         return {
             "antibiotic": antibiotic.lower().strip(),
@@ -607,8 +610,8 @@ class ZentheraPipeline:
         drugs = antibiotics or INDIA_ANTIBIOTICS
         genus = get_genus_from_header(header, self.meta_config.get("top_genera"))
 
-        # Run Deterministic scans (Gene + Mutation)
-        hits = {} # antibiotic -> [{type, name, coverage/confidence}, ...]
+        # 1. Deterministic Scanners (CARD + Mutations)
+        hits = {} # antibiotic -> [{type, name, val}, ...]
         
         if self.gene_scanner:
             card_hits = self.gene_scanner.get_resistant_drugs(seq)
@@ -621,43 +624,10 @@ class ZentheraPipeline:
             mut_hits = self.mut_scanner.get_resistant_drugs(seq)
             for drug, items in mut_hits.items():
                 if drug not in hits: hits[drug] = []
-        gc_pct = gc_content(seq)
+                for item in items:
+                    hits[drug].append({"type": "MUTATION", "name": item["mutation"], "val": item["confidence"]})
 
-        # 1. Deterministic Scanners (CARD + Mutations)
-        card_hits = self.gene_scanner.scan_sequence(seq) if self.gene_scanner else {}
-        mut_hits = self.mut_scanner.scan_sequence(seq) if self.mut_scanner else {}
-        
-        # 2. ML Predictions
-        final_results = []
-        target_abs = antibiotics or INDIA_ANTIBIOTICS
-        
-        # Pre-featurize DNA once for speed
-        X_kmer = build_kmer_vector(seq, self.vectorizers, True)
-
-        for ab in target_abs:
-            # Check for deterministic evidence first
-            genes = card_hits.get(ab.lower(), [])
-            mutations = mut_hits.get(ab.lower(), [])
-            
-            # Run ML model
-            ml_res = self._predict_single(seq, ab, genus, True, gc_pct, len(seq), model, X_kmer=X_kmer)
-            
-            # Refine result with deterministic evidence
-            if genes or mutations:
-                ml_res["phenotype"] = "Resistant"
-                ml_res["confidence"] = max(ml_res["confidence"], 95.0) # Boost confidence
-                ml_res["mechanism"] = f"Detected via {len(genes)} genes and {len(mutations)} mutations"
-                ml_res["evidence"] = {
-                    "genes": [g["gene"] for g in genes],
-                    "mutations": [m["mutation"] for m in mutations]
-                }
-            else:
-                ml_res["mechanism"] = "Genomic k-mer signature (AI Pattern)"
-                ml_res["evidence"] = None
-
-            final_results.append(ml_res)
-            
-        return final_results
+        # 2. ML Predictions (Chunked processing for large genomes)
         chunk_size = 10000
         chunks = [seq[i:i+chunk_size] for i in range(0, len(seq), chunk_size) if len(seq[i:i+chunk_size]) >= 2000]
         if not chunks and len(seq) > 0:
@@ -669,7 +639,7 @@ class ZentheraPipeline:
 
         try:
             res_idx = int(np.where(self.le.classes_ == "Resistant")[0][0])
-        except IndexError:
+        except (IndexError, ValueError):
             res_idx = 0
 
         max_res_probs_rf = {ab: 0.0 for ab in drugs}
@@ -692,7 +662,7 @@ class ZentheraPipeline:
         if X_all:
             try:
                 X_batch = vstack(X_all)
-                # Only run ML if dimensions match (avoids crash during 35-drug re-training)
+                # Only run ML if dimensions match (avoids crash during drug-panel expansion)
                 if X_batch.shape[1] == self.rf.n_features_in_:
                     probs_rf_batch = self.rf.predict_proba(X_batch)[:, res_idx]
                     probs_lr_batch = self.lr.predict_proba(X_batch)[:, res_idx]
@@ -700,17 +670,18 @@ class ZentheraPipeline:
                     for i, (chunk_idx, ab) in enumerate(chunk_drug_map):
                         prob_rf = float(probs_rf_batch[i])
                         prob_lr = float(probs_lr_batch[i])
-                        max_res_probs_rf[ab] = max(max_res_probs_rf[ab], prob_rf)
-                        max_res_probs_lr[ab] = max(max_res_probs_lr[ab], prob_lr)
+                        max_res_probs_rf[ab] = max(max_res_probs_rf.get(ab, 0), prob_rf)
+                        max_res_probs_lr[ab] = max(max_res_probs_lr.get(ab, 0), prob_lr)
                 else:
                     log.warning(f"ML Model width mismatch: {X_batch.shape[1]} vs {self.rf.n_features_in_}. Skipping ML fallback.")
             except Exception as e:
                 log.warning(f"ML Inference failed: {e}")
 
+        # 3. Final Integration
         results = []
         for ab in drugs:
-            prob_rf = max_res_probs_rf[ab]
-            prob_lr = max_res_probs_lr[ab]
+            prob_rf = max_res_probs_rf.get(ab, 0.0)
+            prob_lr = max_res_probs_lr.get(ab, 0.0)
 
             # Check if deterministic layer found resistance
             det_found = ab in hits
@@ -721,16 +692,19 @@ class ZentheraPipeline:
             if det_found:
                 phenotype = "Resistant"
                 best_val = max(g["val"] for g in det_items)
-                confidence = max(0.95, best_val)
+                # Deterministic: Very high confidence, but capped at 99.5% for realism
+                confidence = min(0.995, max(0.96, best_val))
             elif prob_rf >= 0.65:
                 phenotype = "Resistant"
-                confidence = prob_rf
+                # ML: Cap at 98.5% to reflect that no model is 100% perfect
+                confidence = min(0.985, prob_rf)
             elif prob_rf <= 0.35:
                 phenotype = "Susceptible"
-                confidence = 1.0 - prob_rf
+                confidence = min(0.985, 1.0 - prob_rf)
             else:
                 phenotype = "Insufficient Data"
                 confidence = prob_rf if prob_rf >= 0.5 else 1.0 - prob_rf
+                confidence = min(0.94, confidence) # Lower cap for uncertain range
 
             res = {
                 "antibiotic": ab.lower().strip(),
@@ -743,35 +717,44 @@ class ZentheraPipeline:
             }
 
             # Secondary prediction
+            alt_prob = prob_lr if prob_lr >= 0.5 else 1.0 - prob_lr
             alt_pheno = "Resistant" if prob_lr >= 0.5 else "Susceptible"
             models_agree = phenotype == alt_pheno
 
             # Compute trust signals
-            # Since we evaluated the whole genome in chunks, seq_quality is good.
             trust = {
                 "organism_match": genus != "other",
-                "seq_quality": "good",
+                "seq_quality": "good" if seq_length >= 5000 else ("fair" if seq_length >= 1000 else "poor"),
                 "models_agree": models_agree,
                 "alt_model_phenotype": alt_pheno,
-                "alt_model_confidence": round((prob_lr if prob_lr >= 0.5 else 1.0 - prob_lr) * 100, 1)
+                "alt_model_confidence": round(min(0.985, alt_prob) * 100, 1)
             }
+            
+            # Sequence quality note
+            if seq_length >= 5000:
+                trust["seq_quality_note"] = f"{seq_length:,} bp - sufficient for reliable k-mer extraction"
+            elif seq_length >= 1000:
+                trust["seq_quality_note"] = f"{seq_length:,} bp - marginal; longer sequences improve accuracy"
+            else:
+                trust["seq_quality_note"] = f"{seq_length:,} bp - too short for reliable prediction"
 
             # Overall trust score (0-100)
             trust_score = 0
             trust_score += 40 if res["confidence"] >= 70 else (20 if res["confidence"] >= 55 else 0)
             trust_score += 25 if models_agree else 0
             trust_score += 20 if trust["organism_match"] else 0
-            trust_score += 15 # since seq_quality == "good"
+            trust_score += 15 if trust["seq_quality"] == "good" else (10 if trust["seq_quality"] == "fair" else 0)
             trust["trust_score"] = min(trust_score, 100)
+            trust["matched_genus"] = genus.capitalize()
 
             res["genome_header"] = header
             res["seq_length"] = seq_length
-            # We don't have a single gc_pct now, let's just use the last chunk's gc_pct or recalculate
-            res["gc_pct"] = round(gc_content(seq[:10000]), 2)
+            res["gc_pct"] = round(gc_content(seq[:100000]), 2)
             res["trust"] = trust
             results.append(res)
 
         return sorted(results, key=lambda r: r["confidence"], reverse=True)
+
 
     # ── Public API: genome name (fallback) ─────────────────────────────────────
 
