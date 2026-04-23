@@ -986,6 +986,7 @@ def index():
     return render_template_string(HTML_TEMPLATE)
 
 
+@app.route("/api/predict", methods=["POST"])
 @app.route("/predict", methods=["POST"])
 def predict():
     if "fasta" not in request.files:
