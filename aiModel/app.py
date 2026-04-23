@@ -20,7 +20,7 @@ from flask_cors import CORS
 from predict import ZentheraPipeline, get_clinical_context, generate_recommendation, ANTIBIOTIC_INFO
 
 app = Flask(__name__)
-CORS(app) # Enable CORS for all routes
+CORS(app, resources={r"/api/*": {"origins": "*"}}) # Explicitly allow all for /api/ routes
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50 MB max upload
 
 logging.basicConfig(level=logging.INFO)
@@ -986,7 +986,7 @@ def index():
     return render_template_string(HTML_TEMPLATE)
 
 
-@app.route("/api/predict", methods=["POST"])
+@app.route("/predict", methods=["POST"])
 def predict():
     if "fasta" not in request.files:
         return jsonify({"error": "No FASTA file uploaded"}), 400
@@ -1075,7 +1075,7 @@ def predict():
 if __name__ == "__main__":
     print("\n" + "=" * 55)
     print("  Zenthera AMR Predictor — Web Interface")
-    print("  Open: http://localhost:5001")
+    print("  Open: http://localhost:5000")
     print("=" * 55 + "\n")
 
     # Change port to 5001 to ensure we are running the new version

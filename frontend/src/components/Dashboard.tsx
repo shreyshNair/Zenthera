@@ -13,7 +13,8 @@ import {
   Download, 
   RotateCcw,
   ChevronRight,
-  Info
+  Info,
+  Target
 } from 'lucide-react';
 import Navbar from './Navbar';
 import { uploadGenome, PredictionResult as ApiResult } from '../api/predictApi';
