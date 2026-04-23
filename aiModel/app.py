@@ -14,11 +14,13 @@ import os
 import tempfile
 import logging
 from flask import Flask, request, jsonify, render_template_string
+from flask_cors import CORS
 
 # Import the prediction pipeline
 from predict import ZentheraPipeline, get_clinical_context, generate_recommendation, ANTIBIOTIC_INFO
 
 app = Flask(__name__)
+CORS(app) # Enable CORS for all routes
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50 MB max upload
 
 logging.basicConfig(level=logging.INFO)
@@ -740,7 +742,7 @@ HTML_TEMPLATE = r"""
             formData.append('fasta', selectedFile);
 
             try {
-                const resp = await fetch('/predict', { method: 'POST', body: formData });
+                const resp = await fetch('/api/predict', { method: 'POST', body: formData });
                 const data = await resp.json();
 
                 if (!resp.ok) throw new Error(data.error || 'Prediction failed');
@@ -977,14 +979,14 @@ HTML_TEMPLATE = r"""
 """
 
 
-# ── Routes ─────────────────────────────────────────────────────────────────────
+# ── API Routes ───────────────────────────────────────────────────────────────
 
 @app.route("/")
 def index():
     return render_template_string(HTML_TEMPLATE)
 
 
-@app.route("/predict", methods=["POST"])
+@app.route("/api/predict", methods=["POST"])
 def predict():
     if "fasta" not in request.files:
         return jsonify({"error": "No FASTA file uploaded"}), 400
@@ -1070,4 +1072,5 @@ if __name__ == "__main__":
     print("=" * 55 + "\n")
 
     # Change port to 5001 to ensure we are running the new version
-    app.run(host="0.0.0.0", port=5001, debug=False)
+    # Change port to 5000 to match frontend expectations
+    app.run(host="0.0.0.0", port=5000, debug=False)

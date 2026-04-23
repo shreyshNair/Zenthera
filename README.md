@@ -75,6 +75,26 @@ Zenthera/
 
 ---
 
+## 📦 Large File Support (Git LFS)
+
+This project uses **Git LFS** to manage large AI model files. If you are cloning this for the first time, ensure you have Git LFS installed:
+
+1.  **Install**: `git lfs install`
+2.  **Download Models**: `git lfs pull`
+
+The model weights are stored in `aiModel/models/` and are required for the prediction engine to function.
+
+---
+
+## 🔗 Integration Details
+
+-   **Backend Port**: 5000 (Flask)
+-   **Frontend Port**: 5173 (Vite)
+-   **CORS**: Enabled on the backend to allow requests from the frontend.
+-   **API Endpoint**: `POST http://localhost:5000/api/predict` (expects `fasta` file field).
+
+---
+
 ## 🧪 Technology Stack
 
 -   **Frontend**: React 18, Vite, Tailwind CSS, Framer Motion, Lucide React.

@@ -2,12 +2,24 @@ import axios from 'axios';
 
 // interface for the result
 export interface PredictionResult {
-  organism: string;
+  genome: {
+    header: string;
+    seq_length: number;
+    gc_pct: number;
+    organism_match: boolean;
+    matched_genus: string | null;
+  };
   predictions: {
     antibiotic: string;
-    prediction: 'Resistant' | 'Susceptible';
+    phenotype: 'Resistant' | 'Susceptible';
     confidence: number;
+    model: string;
+    trust_score: number;
+    confidence_tier: string;
+    det_found: boolean;
   }[];
+  recommendation: any;
+  clinical: any;
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
@@ -18,11 +30,10 @@ const api = axios.create({
 
 /**
  * Uploads a genome file for resistance prediction.
- * If the backend is not available, it returns a realistic mock result for demo purposes.
  */
 export const uploadGenome = async (file: File): Promise<PredictionResult> => {
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('fasta', file); // Matches backend expected field name
 
   try {
     const response = await api.post('/predict', formData, {
@@ -32,22 +43,7 @@ export const uploadGenome = async (file: File): Promise<PredictionResult> => {
     });
     return response.data;
   } catch (error) {
-    console.warn('Backend not available, returning mock data for demonstration.', error);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    return {
-      organism: "Staphylococcus aureus (Strain XY-24)",
-      predictions: [
-        { antibiotic: 'Amoxicillin', prediction: 'Resistant', confidence: 98.4 },
-        { antibiotic: 'Ciprofloxacin', prediction: 'Susceptible', confidence: 91.2 },
-        { antibiotic: 'Vancomycin', prediction: 'Susceptible', confidence: 99.1 },
-        { antibiotic: 'Erythromycin', prediction: 'Resistant', confidence: 87.5 },
-        { antibiotic: 'Tetracycline', prediction: 'Resistant', confidence: 92.8 },
-        { antibiotic: 'Gentamicin', prediction: 'Susceptible', confidence: 84.6 },
-        { antibiotic: 'Methicillin', prediction: 'Resistant', confidence: 96.2 }
-      ]
-    };
+    console.error('API Error:', error);
+    throw error;
   }
 };

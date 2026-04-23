@@ -16,13 +16,24 @@ import {
   Info
 } from 'lucide-react';
 import Navbar from './Navbar';
+import { uploadGenome, PredictionResult as ApiResult } from '../api/predictApi';
 
-interface PredictionResult {
+interface DashboardResult {
   id: string;
   antibiotic: string;
   prediction: 'Resistant' | 'Susceptible';
   confidence: number;
   mechanism?: string;
+  model: string;
+  confidence_tier: string;
+}
+
+interface GenomeInfo {
+  header: string;
+  seq_length: number;
+  gc_pct: number;
+  organism_match: boolean;
+  matched_genus: string | null;
 }
 
 interface UploadedFile {
@@ -37,9 +48,11 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'vigilance' | 'vengeance'>('vigilance');
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [results, setResults] = useState<PredictionResult[]>([]);
+  const [results, setResults] = useState<DashboardResult[]>([]);
+  const [genomeInfo, setGenomeInfo] = useState<GenomeInfo | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -60,55 +73,63 @@ const Dashboard: React.FC = () => {
     );
     
     if (files.length > 0) {
-      simulateUpload(files[0]);
+      handleFileUpload(files[0]);
     }
   }, []);
 
-  const simulateUpload = (file: File) => {
+  const handleFileUpload = async (file: File) => {
+    setError(null);
     const newFile: UploadedFile = {
       id: Math.random().toString(36).substr(2, 9),
       name: file.name,
-      size: `${(file.size / 1024).toFixed(1)} KB`,
+      size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
       status: 'uploading',
       progress: 0
     };
     
     setUploadedFiles([newFile]);
     
+    // Simulate initial upload progress
     let progress = 0;
     const interval = setInterval(() => {
-      progress += 10;
+      progress += 20;
       setUploadedFiles(prev => prev.map(f => 
-        f.id === newFile.id ? { ...f, progress } : f
+        f.id === newFile.id ? { ...f, progress: Math.min(progress, 90) } : f
       ));
-      
-      if (progress >= 100) {
-        clearInterval(interval);
-        setTimeout(() => {
-          setUploadedFiles(prev => prev.map(f => 
-            f.id === newFile.id ? { ...f, status: 'processing' } : f
-          ));
-          runAnalysis();
-        }, 500);
-      }
-    }, 150);
-  };
+      if (progress >= 90) clearInterval(interval);
+    }, 100);
 
-  const runAnalysis = () => {
-    setIsAnalyzing(true);
-    setTimeout(() => {
-      const mockResults: PredictionResult[] = [
-        { id: '1', antibiotic: 'Meropenem', prediction: 'Resistant', confidence: 94.2, mechanism: 'blaKPC' },
-        { id: '2', antibiotic: 'Ciprofloxacin', prediction: 'Susceptible', confidence: 87.5 },
-        { id: '3', antibiotic: 'Vancomycin', prediction: 'Susceptible', confidence: 91.3 },
-        { id: '4', antibiotic: 'Gentamicin', prediction: 'Resistant', confidence: 76.8, mechanism: 'aac(6)-Ib' },
-        { id: '5', antibiotic: 'Colistin', prediction: 'Susceptible', confidence: 82.1 },
-      ];
-      setResults(mockResults);
+    try {
+      setIsAnalyzing(true);
+      const apiResult = await uploadGenome(file);
+      
+      setUploadedFiles(prev => prev.map(f => 
+        f.id === newFile.id ? { ...f, status: 'complete', progress: 100 } : f
+      ));
+
+      setGenomeInfo(apiResult.genome);
+      
+      const dashboardResults: DashboardResult[] = apiResult.predictions.map((p, idx) => ({
+        id: idx.toString(),
+        antibiotic: p.antibiotic,
+        prediction: p.phenotype,
+        confidence: p.confidence,
+        model: p.model,
+        confidence_tier: p.confidence_tier,
+        mechanism: p.det_found ? 'Deterministic Match' : undefined
+      }));
+
+      setResults(dashboardResults);
       setIsAnalyzing(false);
-      setActiveTab('vengeance');
-      setUploadedFiles(prev => prev.map(f => ({ ...f, status: 'complete' })));
-    }, 2500);
+      setTimeout(() => setActiveTab('vengeance'), 800);
+
+    } catch (err: any) {
+      setError(err.message || 'Analysis failed. Please ensure the backend is running.');
+      setUploadedFiles(prev => prev.map(f => 
+        f.id === newFile.id ? { ...f, status: 'error' } : f
+      ));
+      setIsAnalyzing(false);
+    }
   };
 
   return (
@@ -178,6 +199,15 @@ const Dashboard: React.FC = () => {
             >
               {/* Upload Zone */}
               <div className="lg:col-span-2 space-y-8">
+                {error && (
+                  <div className="bg-red-50 border border-red-100 p-6 rounded-[2rem] flex items-center gap-4 text-red-600">
+                    <ShieldAlert className="w-6 h-6 flex-shrink-0" />
+                    <div>
+                      <p className="font-bold uppercase tracking-wider text-xs">Analysis Error</p>
+                      <p className="text-sm opacity-80">{error}</p>
+                    </div>
+                  </div>
+                )}
                 <div 
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
@@ -191,7 +221,8 @@ const Dashboard: React.FC = () => {
                   <input 
                     type="file" 
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    onChange={(e) => e.target.files?.[0] && simulateUpload(e.target.files[0])}
+                    onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+                    disabled={isAnalyzing}
                   />
                   
                   <div className="w-20 h-20 bg-white rounded-3xl shadow-xl flex items-center justify-center mb-8">
@@ -283,7 +314,7 @@ const Dashboard: React.FC = () => {
                 {[
                   { label: "Resistant", val: results.filter(r => r.prediction === 'Resistant').length, color: "text-red-600", bg: "bg-red-50", icon: ShieldAlert },
                   { label: "Susceptible", val: results.filter(r => r.prediction === 'Susceptible').length, color: "text-green-600", bg: "bg-green-50", icon: ShieldCheck },
-                  { label: "Precision", val: "94.2%", color: "text-brand-orange", bg: "bg-brand-orange/5", icon: Cpu }
+                  { label: "Confidence", val: genomeInfo ? `${genomeInfo.gc_pct}% GC` : "94.2%", color: "text-brand-orange", bg: "bg-brand-orange/5", icon: Cpu }
                 ].map((stat, idx) => (
                   <div key={idx} className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm">
                     <div className={`w-14 h-14 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center mb-6`}>
