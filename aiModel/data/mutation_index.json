@@ -1,0 +1,32 @@
+{
+    "gyrA_S83L_Ecoli": {
+        "description": "gyrA S83L (Fluoroquinolone Resistance)",
+        "drug": "ciprofloxacin",
+        "anchor": "GACCACGGCAGACTCGGCCTATGTAACGACC"
+    },
+    "gyrA_S83L_Ecoli_alt": {
+        "description": "gyrA S83L (Fluoroquinolone Resistance)",
+        "drug": "levofloxacin",
+        "anchor": "GACCACGGCAGACTCGGCCTATGTAACGACC"
+    },
+    "rpoB_S450L_MTB": {
+        "description": "rpoB S450L (Rifampicin Resistance)",
+        "drug": "rifampicin",
+        "anchor": "GACCAGCCAGCTGAGCCAATTCATGGACCAG"
+    },
+    "katG_S315T_MTB": {
+        "description": "katG S315T (Isoniazid Resistance)",
+        "drug": "isoniazid",
+        "anchor": "GGCGGTCGCGGTCGCTCCCGGCAACGGCACG"
+    },
+    "parC_S80I_Ecoli": {
+        "description": "parC S80I (Fluoroquinolone Resistance)",
+        "drug": "ciprofloxacin",
+        "anchor": "TCTACGCCATGAGCGAGCTGGGCAACGATTG"
+    },
+    "rrs_A1401G_MTB": {
+        "description": "rrs A1401G (Amikacin Resistance)",
+        "drug": "amikacin",
+        "anchor": "CGTGCTACAATGGCCGGTACAAAGGGTTGCG"
+    }
+}

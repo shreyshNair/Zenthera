@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+dist/
+build/
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Zenthera specific
+aiModel/logs/
+aiModel/scratch/
+aiModel/data/*
+!aiModel/data/mutation_index.json
+aiModel/sample_genomes/*
+!aiModel/sample_genomes/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
