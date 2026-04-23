@@ -34,16 +34,9 @@ const Navbar: React.FC = () => {
 
         {/* Desktop Links */}
         <div className="hidden md:flex items-center gap-8">
-          <div className="relative group cursor-pointer flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-brand-orange transition-colors">
-            Products <ChevronDown className="w-4 h-4" />
-            <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all py-2">
-              <div className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-slate-700">FASTA Scanner</div>
-              <div className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-slate-700">AMR Predictor</div>
-              <div className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-slate-700">Clinical Reports</div>
-            </div>
-          </div>
-          <a href="#section-about" className="text-sm font-medium text-slate-600 hover:text-brand-orange transition-colors">About Us</a>
-          <a href="#section-news" className="text-sm font-medium text-slate-600 hover:text-brand-orange transition-colors">Resources</a>
+          <a href="/how-it-works" className="text-sm font-medium text-slate-600 hover:text-brand-orange transition-colors">How it Works</a>
+          <a href="/#section-about" className="text-sm font-medium text-slate-600 hover:text-brand-orange transition-colors">About Us</a>
+          <a href="/#section-news" className="text-sm font-medium text-slate-600 hover:text-brand-orange transition-colors">Resources</a>
           <button 
             onClick={() => navigate('/dashboard')}
             className="px-6 py-2.5 bg-brand-orange text-white rounded-full text-sm font-semibold hover:bg-[#d64e1f] transition-colors shadow-lg shadow-brand-orange/20"
@@ -71,9 +64,9 @@ const Navbar: React.FC = () => {
             className="md:hidden bg-white border-t border-slate-100 overflow-hidden"
           >
             <div className="px-6 py-8 flex flex-col gap-6">
-              <div className="text-lg font-medium text-slate-900">Products</div>
-              <a href="#section-about" className="text-lg font-medium text-slate-900" onClick={() => setIsMobileMenuOpen(false)}>About Us</a>
-              <a href="#section-news" className="text-lg font-medium text-slate-900" onClick={() => setIsMobileMenuOpen(false)}>Resources</a>
+              <a href="/how-it-works" className="text-lg font-medium text-slate-900" onClick={() => setIsMobileMenuOpen(false)}>How it Works</a>
+              <a href="/#section-about" className="text-lg font-medium text-slate-900" onClick={() => setIsMobileMenuOpen(false)}>About Us</a>
+              <a href="/#section-news" className="text-lg font-medium text-slate-900" onClick={() => setIsMobileMenuOpen(false)}>Resources</a>
               <button 
                 onClick={() => {
                   navigate('/dashboard');
