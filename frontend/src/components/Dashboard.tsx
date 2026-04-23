@@ -2,7 +2,6 @@ import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ArrowLeft, 
   Upload, 
   FileText, 
   Database, 
@@ -10,14 +9,11 @@ import {
   Activity, 
   ShieldCheck, 
   ShieldAlert, 
-  Download, 
-  RotateCcw,
-  ChevronRight,
   Info,
   Target
 } from 'lucide-react';
 import Navbar from './Navbar';
-import { uploadGenome, PredictionResult as ApiResult } from '../api/predictApi';
+import { uploadGenome } from '../api/predictApi';
 
 interface DashboardResult {
   id: string;
@@ -46,7 +42,6 @@ interface UploadedFile {
 }
 
 const Dashboard: React.FC = () => {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'vigilance' | 'vengeance'>('vigilance');
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [results, setResults] = useState<DashboardResult[]>([]);

@@ -17,15 +17,6 @@ const Reveal = ({ children, delay = 0, className = '' }: { children: React.React
   </motion.div>
 );
 
-/* ── Stat counter ────────────────────────────────────────── */
-const StatBlock = ({ value, label, suffix = '' }: { value: string; label: string; suffix?: string }) => (
-  <div className="text-center md:text-left">
-    <div className="text-5xl md:text-7xl font-display font-bold text-slate-900 tracking-tight">
-      {value}<span className="text-brand-orange">{suffix}</span>
-    </div>
-    <div className="text-sm text-slate-500 mt-2 tracking-wide uppercase font-medium">{label}</div>
-  </div>
-);
 
 /* ── Main Component ──────────────────────────────────────── */
 const LandingPage: React.FC = () => {

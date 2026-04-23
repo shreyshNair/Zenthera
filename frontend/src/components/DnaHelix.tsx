@@ -9,7 +9,7 @@ const DnaStrand = ({ position, rotation, color }: { position: [number, number, n
   const radius = 1.5;
   const height = 10;
 
-  useFrame((state) => {
+  useFrame(() => {
     if (groupRef.current) {
       groupRef.current.rotation.y += 0.01;
     }
