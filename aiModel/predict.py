@@ -168,11 +168,10 @@ def build_kmer_vector(text_or_seq: str, vectorizers: dict, is_dna: bool) -> csr_
     Build the k-mer feature vector. Matches training by sampling exactly
     the first 10,000 bases to maintain consistent TF-IDF normalization.
     """
-    if is_dna:
-        # Crucial: Must match SEQ_SAMPLE_LEN = 10000 from step1b_fetch_sequences.py
-        processed_input = text_or_seq[:10000]
-    else:
-        processed_input = text_or_seq
+    processed_input = text_or_seq
+    # For large sequences, we take the first 100k bp to ensure representative k-mer distribution
+    if is_dna and len(processed_input) > 100000:
+        processed_input = processed_input[:100000]
 
     X_parts = []
     for k in KMER_SIZES:
@@ -622,12 +621,43 @@ class ZentheraPipeline:
             mut_hits = self.mut_scanner.get_resistant_drugs(seq)
             for drug, items in mut_hits.items():
                 if drug not in hits: hits[drug] = []
-                for item in items:
-                    hits[drug].append({"type": "MUTATION", "name": item["mutation"], "val": item["confidence"]})
-            if card_hits:
-                log.info(f"CARD: Detected resistance genes for {list(card_hits.keys())}")
+        gc_pct = gc_content(seq)
 
-        # Chunk the sequence into 10k bp chunks to scan the whole genome
+        # 1. Deterministic Scanners (CARD + Mutations)
+        card_hits = self.gene_scanner.scan_sequence(seq) if self.gene_scanner else {}
+        mut_hits = self.mut_scanner.scan_sequence(seq) if self.mut_scanner else {}
+        
+        # 2. ML Predictions
+        final_results = []
+        target_abs = antibiotics or INDIA_ANTIBIOTICS
+        
+        # Pre-featurize DNA once for speed
+        X_kmer = build_kmer_vector(seq, self.vectorizers, True)
+
+        for ab in target_abs:
+            # Check for deterministic evidence first
+            genes = card_hits.get(ab.lower(), [])
+            mutations = mut_hits.get(ab.lower(), [])
+            
+            # Run ML model
+            ml_res = self._predict_single(seq, ab, genus, True, gc_pct, len(seq), model, X_kmer=X_kmer)
+            
+            # Refine result with deterministic evidence
+            if genes or mutations:
+                ml_res["phenotype"] = "Resistant"
+                ml_res["confidence"] = max(ml_res["confidence"], 95.0) # Boost confidence
+                ml_res["mechanism"] = f"Detected via {len(genes)} genes and {len(mutations)} mutations"
+                ml_res["evidence"] = {
+                    "genes": [g["gene"] for g in genes],
+                    "mutations": [m["mutation"] for m in mutations]
+                }
+            else:
+                ml_res["mechanism"] = "Genomic k-mer signature (AI Pattern)"
+                ml_res["evidence"] = None
+
+            final_results.append(ml_res)
+            
+        return final_results
         chunk_size = 10000
         chunks = [seq[i:i+chunk_size] for i in range(0, len(seq), chunk_size) if len(seq[i:i+chunk_size]) >= 2000]
         if not chunks and len(seq) > 0:

@@ -10,22 +10,15 @@ API_BASE_URL = "https://www.bv-brc.org/api"
 # + ICMR AMR surveillance panel)
 # ──────────────────────────────────────────────────────────────
 INDIA_ANTIBIOTICS = [
-    # Original 15
     "ciprofloxacin", "amoxicillin", "ampicillin", "tetracycline", "azithromycin",
     "ceftriaxone", "meropenem", "colistin", "trimethoprim", "chloramphenicol",
     "erythromycin", "levofloxacin", "imipenem", "gentamicin", "doxycycline",
     
-    # New 20 (Clinical Expansion)
-    "amikacin", "tobramycin",           # Aminoglycosides
-    "cefepime", "ceftazidime",          # 3rd/4th gen Cephalosporins
-    "nitrofurantoin", "fosfomycin",     # UTI specifics
-    "tigecycline", "aztreonam",         # Reserve Beta-lactams
-    "teicoplanin", "vancomycin",        # Glycopeptides (Gram+)
-    "linezolid", "clindamycin",         # Oxazolidinone/Lincosamide
-    "moxifloxacin", "cefotaxime",       # Fluoroquinolones/Cephalosporins
-    "cefuroxime", "metronidazole",      # Anaerobes/STIs
-    "rifampicin", "isoniazid",          # Tuberculosis (Critical)
-    "pyrazinamide", "ethambutol"        # Tuberculosis (Critical)
+    # New 20 (Commented out until re-training is complete to avoid feature mismatch)
+    # "amikacin", "tobramycin", "cefepime", "ceftazidime", "nitrofurantoin",
+    # "fosfomycin", "tigecycline", "aztreonam", "teicoplanin", "vancomycin",
+    # "linezolid", "clindamycin", "moxifloxacin", "cefotaxime", "cefuroxime",
+    # "metronidazole", "rifampicin", "isoniazid", "pyrazinamide", "ethambutol"
 ]
 
 # ──────────────────────────────────────────────────────────────
