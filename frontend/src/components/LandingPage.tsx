@@ -1,466 +1,529 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, useScroll, useTransform, useSpring, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Dna, ShieldCheck, Zap, FileText, ChevronRight, Play } from 'lucide-react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { ArrowRight, Shield, Zap, BarChart3, FlaskConical, Microscope, Dna, ChevronRight, ArrowUpRight } from 'lucide-react';
 import Navbar from './Navbar';
 
-// --- Original Hero Components ---
-interface Bacterium {
-  id: number;
-  x: number;
-  y: number;
-  size: number;
-  rotation: number;
-  type: "rod" | "coccus" | "spiral" | "vibrio" | "bacillus";
-  opacity: number;
-  drift: { x: number; y: number };
-  rotationSpeed: number;
-}
-
-const generateBacteria = (count: number): Bacterium[] =>
-  Array.from({ length: count }, (_, i) => ({
-    id: i,
-    x: Math.random() * 100,
-    y: Math.random() * 100,
-    size: 10 + Math.random() * 24,
-    rotation: Math.random() * 360,
-    type: (["rod", "coccus", "spiral", "vibrio", "bacillus"] as const)[
-      Math.floor(Math.random() * 5)
-    ],
-    opacity: 0.4 + Math.random() * 0.5,
-    drift: { x: (Math.random() - 0.5) * 0.25, y: (Math.random() - 0.5) * 0.25 },
-    rotationSpeed: (Math.random() - 0.5) * 2,
-  }));
-
-const BacteriaShape = ({ type, size }: { type: string; size: number }) => {
-  if (type === "rod") {
-    return (
-      <svg width={size * 2.5} height={size} viewBox="0 0 50 20">
-        <rect x="5" y="3" width="40" height="14" rx="7" fill="none" stroke="currentColor" strokeWidth="1.5" />
-        <line x1="25" y1="3" x2="25" y2="17" stroke="currentColor" strokeWidth="0.5" opacity="0.5" />
-      </svg>
-    );
-  }
-  if (type === "coccus") {
-    return (
-      <svg width={size * 1.5} height={size * 1.5} viewBox="0 0 30 30">
-        <circle cx="15" cy="15" r="12" fill="none" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="15" cy="15" r="5" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.4" />
-      </svg>
-    );
-  }
-  if (type === "spiral") {
-    return (
-      <svg width={size * 3} height={size} viewBox="0 0 60 20">
-        <path d="M5 10 Q15 2 25 10 Q35 18 45 10 Q55 2 58 10" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      </svg>
-    );
-  }
-  if (type === "vibrio") {
-    return (
-      <svg width={size * 2} height={size * 1.5} viewBox="0 0 40 30">
-        <path d="M5 25 Q20 -5 35 15" fill="none" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="35" cy="15" r="3" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.6" />
-      </svg>
-    );
-  }
-  return (
-    <svg width={size * 3.5} height={size} viewBox="0 0 70 20">
-      <rect x="3" y="4" width="18" height="12" rx="6" fill="none" stroke="currentColor" strokeWidth="1.2" />
-      <rect x="25" y="4" width="18" height="12" rx="6" fill="none" stroke="currentColor" strokeWidth="1.2" />
-      <rect x="47" y="4" width="18" height="12" rx="6" fill="none" stroke="currentColor" strokeWidth="1.2" />
-    </svg>
-  );
-};
-
-// --- Animation Reveal Wrapper ---
-const FadeInWhenVisible = ({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) => (
+/* ── Fade-in wrapper ─────────────────────────────────────── */
+const Reveal = ({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) => (
   <motion.div
-    initial={{ opacity: 0, y: 40 }}
+    initial={{ opacity: 0, y: 50 }}
     whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "-100px" }}
-    transition={{ duration: 0.8, delay, ease: [0.16, 1, 0.3, 1] }}
+    viewport={{ once: true, margin: '-80px' }}
+    transition={{ duration: 0.7, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
+    className={className}
   >
     {children}
   </motion.div>
 );
 
+/* ── Stat counter ────────────────────────────────────────── */
+const StatBlock = ({ value, label, suffix = '' }: { value: string; label: string; suffix?: string }) => (
+  <div className="text-center md:text-left">
+    <div className="text-5xl md:text-7xl font-display font-bold text-slate-900 tracking-tight">
+      {value}<span className="text-brand-orange">{suffix}</span>
+    </div>
+    <div className="text-sm text-slate-500 mt-2 tracking-wide uppercase font-medium">{label}</div>
+  </div>
+);
 
+/* ── Main Component ──────────────────────────────────────── */
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const heroRef = useRef<HTMLDivElement>(null);
-  
-  const [mousePos, setMousePos] = useState({ x: -300, y: -300 });
-  const [bacteria] = useState(() => generateBacteria(80));
-  const [positions, setPositions] = useState<{ x: number; y: number; rotation: number }[]>([]);
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
+  const heroY = useTransform(scrollYProgress, [0, 1], [0, 150]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
-  const { scrollY } = useScroll();
+  const features = [
+    { icon: Shield, title: 'CARD Database Integration', desc: 'Deterministic resistance gene scanning against the Comprehensive Antibiotic Resistance Database for absolute clinical certainty.', tag: 'Security' },
+    { icon: Zap, title: 'Real-Time Prediction', desc: 'Sub-second inference across 35 antibiotic classes using ensemble Random Forest and Logistic Regression classifiers.', tag: 'Speed' },
+    { icon: BarChart3, title: 'Clinical Reports', desc: 'Auto-generated susceptibility profiles with trust scoring, organism matching, and treatment recommendations.', tag: 'Analytics' },
+    { icon: FlaskConical, title: 'Mutation Scanner', desc: 'Point-mutation detection layer identifies known resistance-conferring SNPs across key genomic loci.', tag: 'Precision' },
+    { icon: Microscope, title: 'Multi-Window Analysis', desc: 'Genome-wide scanning in 10kb chunks eliminates positional bias for comprehensive resistance detection.', tag: 'Coverage' },
+    { icon: Dna, title: 'K-mer Intelligence', desc: 'Advanced TF-IDF vectorization of DNA k-mers captures structural variants invisible to alignment-based methods.', tag: 'AI/ML' },
+  ];
 
-  useEffect(() => {
-    setPositions(bacteria.map((b) => ({ x: b.x, y: b.y, rotation: b.rotation })));
-    const interval = setInterval(() => {
-      setPositions((prev) =>
-        prev.map((p, i) => ({
-          x: (p.x + bacteria[i].drift.x + 100) % 100,
-          y: (p.y + bacteria[i].drift.y + 100) % 100,
-          rotation: p.rotation + bacteria[i].rotationSpeed,
-        }))
-      );
-    }, 60);
-    return () => clearInterval(interval);
-  }, [bacteria]);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!heroRef.current) return;
-    const rect = heroRef.current.getBoundingClientRect();
-    setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-  }, []);
-
-  const torchRadius = 250;
+  const steps = [
+    { num: '01', title: 'Upload Genome', desc: 'Securely upload your FASTA, FNA, or FA genome files to our analysis pipeline.' },
+    { num: '02', title: 'AI Extraction', desc: 'Our engine extracts k-mer signatures and scans for resistance genes and mutations.' },
+    { num: '03', title: 'AMR Prediction', desc: 'Real-time susceptibility scoring across 35 antibiotic classes with confidence metrics.' },
+    { num: '04', title: 'Clinical Report', desc: 'Receive structured treatment recommendations with trust-scored predictions.' },
+  ];
 
   return (
     <div className="relative w-full bg-white">
       <Navbar />
 
-      {/* ============================================
-          HERO SECTION (Standard Layout)
-          ============================================ */}
-      <div 
-        ref={heroRef}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={() => setMousePos({ x: -300, y: -300 })}
-        className="relative min-h-[90vh] w-full overflow-hidden bg-white flex items-center pt-24"
-      >
-        {/* Subtle Grid */}
-        <div className="absolute inset-0 z-0 opacity-[0.03]"
+      {/* ═══════════════════════════════════════════
+          HERO SECTION
+          ═══════════════════════════════════════════ */}
+      <section ref={heroRef} className="relative min-h-screen w-full overflow-hidden bg-white">
+        {/* ── Large orange-to-transparent gradient sweep ── */}
+        <div className="absolute top-0 right-0 w-[70%] h-[80%] pointer-events-none"
+          style={{ background: 'linear-gradient(220deg, rgba(241,90,36,0.10) 0%, rgba(241,90,36,0.04) 30%, transparent 60%)' }} />
+        <div className="absolute bottom-0 left-0 w-[60%] h-[50%] pointer-events-none"
+          style={{ background: 'linear-gradient(40deg, rgba(241,90,36,0.07) 0%, transparent 50%)' }} />
+
+        {/* Fading dot grid */}
+        <div className="absolute inset-0 z-0 pointer-events-none"
           style={{
             backgroundSize: '40px 40px',
-            backgroundImage: `linear-gradient(to right, #64748b 1px, transparent 1px),
-                             linear-gradient(to bottom, #64748b 1px, transparent 1px)`,
-            maskImage: 'radial-gradient(circle at 50% 50%, black 30%, transparent 80%)',
+            backgroundImage: 'radial-gradient(circle, rgba(241,90,36,0.12) 1px, transparent 1px)',
+            maskImage: 'radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 80%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 80%)',
           }}
         />
 
-        {/* Torch Glow Effect */}
-        <div
-          className="pointer-events-none absolute z-10 rounded-full"
-          style={{
-            left: mousePos.x - torchRadius,
-            top: mousePos.y - torchRadius,
-            width: torchRadius * 2,
-            height: torchRadius * 2,
-            background: `radial-gradient(circle, rgba(241, 90, 36, 0.15) 0%, rgba(241, 90, 36, 0.05) 40%, transparent 70%)`,
-            mixBlendMode: 'multiply'
-          }}
-        />
+        {/* ── Orbs — scattered everywhere ── */}
+        {/* Top area */}
+        <div className="absolute -top-16 right-[20%] w-[400px] h-[400px] rounded-full bg-brand-orange/[0.08] blur-[120px] pointer-events-none" />
+        <div className="absolute top-10 left-[15%] w-[200px] h-[200px] rounded-full bg-orange-200/30 blur-[80px] pointer-events-none" />
+        <div className="absolute top-32 right-[8%] w-[150px] h-[150px] rounded-full bg-brand-orange/[0.06] blur-[60px] pointer-events-none" />
+        {/* Middle area */}
+        <div className="absolute top-[40%] left-[5%] w-[300px] h-[300px] rounded-full bg-orange-100/50 blur-[100px] pointer-events-none" />
+        <div className="absolute top-[35%] right-[15%] w-[250px] h-[250px] rounded-full bg-brand-orange/[0.05] blur-[90px] pointer-events-none" />
+        <div className="absolute top-[50%] left-[40%] w-[350px] h-[200px] rounded-full bg-orange-50/60 blur-[100px] pointer-events-none" />
+        {/* Bottom area */}
+        <div className="absolute -bottom-20 -left-20 w-[350px] h-[350px] rounded-full bg-brand-orange/[0.07] blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-10 right-[25%] w-[200px] h-[200px] rounded-full bg-orange-200/25 blur-[70px] pointer-events-none" />
+        <div className="absolute bottom-[15%] left-[30%] w-[180px] h-[180px] rounded-full bg-brand-orange/[0.04] blur-[80px] pointer-events-none" />
+        <div className="absolute -bottom-10 right-[5%] w-[280px] h-[280px] rounded-full bg-orange-100/40 blur-[90px] pointer-events-none" />
+        {/* Extra small accent orbs */}
+        <div className="absolute top-[20%] left-[50%] w-[100px] h-[100px] rounded-full bg-brand-orange/[0.10] blur-[50px] pointer-events-none" />
+        <div className="absolute top-[70%] right-[40%] w-[120px] h-[120px] rounded-full bg-orange-200/30 blur-[50px] pointer-events-none" />
 
-        {/* Bacteria Layer */}
-        <div className="absolute inset-0 pointer-events-none z-[5]">
-          {bacteria.map((b, i) => {
-            if (!positions[i]) return null;
-            return (
-              <div
-                key={b.id}
-                className="absolute transition-opacity duration-500 text-brand-orange"
-                style={{
-                  left: `${positions[i].x}%`,
-                  top: `${positions[i].y}%`,
-                  transform: `rotate(${positions[i].rotation}deg)`,
-                  opacity: b.opacity * 0.4,
-                }}
-              >
-                <BacteriaShape type={b.type} size={b.size} />
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Hero Content - SPLIT LAYOUT */}
-        <div className="relative z-20 w-full max-w-7xl mx-auto px-6 md:px-12 flex flex-col md:flex-row items-center justify-between gap-16 py-20">
-          {/* Left Side: Text & Brand */}
-          <motion.div 
-            initial={{ opacity: 0, x: -60 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-            className="flex-1 text-left relative"
-          >
-            {/* Subtle floating glass background for text */}
-            <div className="absolute -inset-10 bg-white/20 backdrop-blur-[2px] rounded-[4rem] -z-10 border border-white/30 shadow-[0_8px_32px_0_rgba(241,90,36,0.05)]" />
-
-            <div className="mb-6 inline-flex items-center gap-2 px-4 py-2 bg-brand-orange/10 rounded-full border border-brand-orange/20">
-              <div className="w-2 h-2 bg-brand-orange rounded-full animate-pulse" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-orange">Clinical Intelligence v3.0</span>
-            </div>
-
-            <h1 className="font-serif italic text-7xl md:text-[8rem] text-slate-900 leading-[0.85] mb-10 tracking-tighter">
-              Zenthera
-              <br />
-              <span className="text-brand-orange italic relative inline-block">
-                AI
-                <motion.div 
-                  initial={{ width: 0 }}
-                  animate={{ width: '100%' }}
-                  transition={{ duration: 1.5, delay: 1, ease: "circOut" }}
-                  className="absolute -bottom-2 left-0 h-1.5 bg-brand-orange/30 rounded-full"
-                />
-              </span>
-            </h1>
-
-            <p className="text-slate-500 text-xl md:text-2xl max-w-lg mb-12 font-light tracking-wide leading-relaxed">
-              Accelerating antibiotic discovery and resistance prediction through <span className="text-slate-900 font-medium italic">high-fidelity genomic intelligence.</span>
-            </p>
-
-            <motion.button
-              onClick={() => navigate('/dashboard')}
-              whileHover={{ scale: 1.02, boxShadow: '0 20px 40px rgba(241,90,36,0.25)' }}
-              whileTap={{ scale: 0.98 }}
-              className="group relative flex items-center gap-4 px-12 py-6 bg-slate-900 text-white rounded-full text-sm font-bold tracking-wider uppercase transition-all overflow-hidden shadow-2xl"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-brand-orange to-[#ff8c5a] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <span className="relative z-10">Initialize Pipeline</span>
-              <ArrowRight className="relative z-10 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-            </motion.button>
-
-            <p className="text-slate-400 font-mono text-[9px] mt-16 tracking-[0.4em] uppercase opacity-50">
-              [ Interactive Specimen Environment Active ]
-            </p>
-          </motion.div>
-
-          {/* Right Side: Blooddrop Video Animation */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.85, x: 60 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
-            className="flex-1 flex justify-center items-center relative"
-          >
-            {/* Secondary atmospheric glow behind drop */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] aspect-square bg-brand-orange/5 blur-[120px] rounded-full pointer-events-none" />
-
-            <div className="relative w-full max-w-md aspect-square rounded-[50%_50%_50%_0] rotate-[135deg] overflow-hidden shadow-[0_40px_100px_-20px_rgba(241,90,36,0.35)] border-8 border-white bg-black group transition-all duration-1000 hover:shadow-[0_60px_120px_-30px_rgba(241,90,36,0.5)]">
-              
-              <motion.div 
-                animate={{ scale: [1, 1.05, 1] }}
-                transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-                className="w-full h-full -rotate-[135deg] scale-[1.6]"
-              >
-                <video 
-                  autoPlay 
-                  loop 
-                  muted 
-                  playsInline
-                  className="w-full h-full object-cover grayscale-[0.2] contrast-125"
-                >
-                  <source src="/dnaanimation.mp4" type="video/mp4" />
-                </video>
+        <motion.div style={{ y: heroY, opacity: heroOpacity }} className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 pt-32 md:pt-40 pb-20">
+          <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-8">
+            {/* Left — Text */}
+            <div className="flex-1 max-w-2xl">
+              <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-brand-orange/10 rounded-full border border-brand-orange/20 mb-8">
+                <div className="w-2 h-2 bg-brand-orange rounded-full animate-pulse" />
+                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-brand-orange">Genomic Intelligence Platform</span>
               </motion.div>
 
-              {/* Glass Glare Layer */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-transparent pointer-events-none -rotate-[135deg] opacity-60" />
-              
-              {/* Internal Brand Glow */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-brand-orange/30 via-transparent to-brand-orange/10 pointer-events-none -rotate-[135deg] mix-blend-overlay" />
-              
-              {/* Hover Bloom */}
-              <div className="absolute -inset-10 bg-brand-orange/30 blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none" />
-            </div>
-          </motion.div>
-        </div>
-      </div>
+              <motion.h1 initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.1 }}
+                className="font-display text-6xl md:text-8xl lg:text-[6.5rem] font-bold text-slate-900 leading-[0.9] tracking-tight mb-8">
+                Predict{' '}
+                <span className="relative inline-block">
+                  <span className="text-brand-orange">AMR</span>
+                  <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 12" fill="none">
+                    <path d="M2 8 Q50 2, 100 6 T198 4" stroke="#F15A24" strokeWidth="3" strokeLinecap="round" opacity="0.4" />
+                  </svg>
+                </span>
+                <br />
+                <span className="text-slate-400 font-light italic text-[0.6em]">with</span>{' '}
+                DNA.
+              </motion.h1>
 
-      {/* ============================================
-          SECTIONS (Restructured for Single Page)
-          ============================================ */}
-      
-      {/* Specificity Section */}
-      <section id="section-about" className="relative py-32 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <FadeInWhenVisible>
-            <div className="text-center mb-24">
-              <div className="text-brand-orange font-bold uppercase tracking-widest text-xs mb-4">Precision</div>
-              <h2 className="text-5xl md:text-6xl font-bold mb-8">Designed Specifically For</h2>
-              <div className="w-20 h-1.5 bg-brand-orange mx-auto rounded-full"></div>
+              <motion.p initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }}
+                className="text-lg md:text-xl text-slate-500 max-w-lg mb-10 leading-relaxed font-light">
+                Accelerating antibiotic resistance prediction through high-fidelity genomic intelligence and deterministic gene scanning.
+              </motion.p>
+
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.5 }}
+                className="flex flex-wrap items-center gap-4">
+                <button onClick={() => navigate('/dashboard')}
+                  className="group relative flex items-center gap-3 px-8 py-4 bg-brand-orange text-white rounded-full text-sm font-bold tracking-wide uppercase overflow-hidden shadow-xl shadow-brand-orange/25 hover:shadow-brand-orange/40 transition-all hover:scale-[1.02]">
+                  <span className="relative z-10">Start Analysis</span>
+                  <ArrowRight className="relative z-10 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  <div className="absolute inset-0 bg-brand-orange-dark opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
+                <button className="flex items-center gap-2 px-6 py-4 text-sm font-semibold text-slate-600 hover:text-brand-orange transition-colors">
+                  <div className="w-10 h-10 rounded-full border-2 border-slate-200 flex items-center justify-center group-hover:border-brand-orange transition-colors">
+                    <ArrowUpRight className="w-4 h-4" />
+                  </div>
+                  Learn More
+                </button>
+              </motion.div>
             </div>
-          </FadeInWhenVisible>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { title: "Clinical Researchers", desc: "Accelerate genomic surveillance and identify emerging resistance patterns across bacterial populations.", icon: ShieldCheck, color: "bg-brand-orange" },
-              { title: "Hospital Diagnostics", desc: "Reduce turn-around time for critical infections from days to minutes, enabling faster evidence-based selection.", icon: Zap, color: "bg-slate-900" },
-              { title: "Public Health Agencies", desc: "Monitor AMR prevalence and spread with automated data processing and standardized reports.", icon: FileText, color: "bg-brand-orange" }
-            ].map((card, idx) => (
-              <motion.div 
-                key={idx} 
-                whileHover={{ y: -10 }} 
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                className="bg-white p-12 rounded-[2.5rem] shadow-sm border border-slate-100 group transition-all"
-              >
-                <div className={`w-14 h-14 ${card.color} rounded-2xl flex items-center justify-center mb-8 transform group-hover:rotate-6 transition-transform`}>
-                  <card.icon className="text-white w-7 h-7" />
-                </div>
-                <h3 className="text-2xl font-bold mb-4">{card.title}</h3>
-                <p className="text-slate-600 leading-relaxed mb-8">{card.desc}</p>
-                <div className="flex items-center gap-2 text-brand-orange font-bold cursor-pointer group/link">
-                  Learn More <ChevronRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
+
+            {/* Right — Floating Dashboard Cards (Light Theme) */}
+            <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="flex-1 flex justify-center items-center relative min-h-[520px]">
+
+              {/* ─── Floating Card: Alert (top-left) ─── */}
+              <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 5, repeat: Infinity }}
+                className="absolute top-6 left-0 md:left-2 z-10">
+                <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-lg">
+                  <div className="w-9 h-9 bg-brand-orange/10 rounded-xl flex items-center justify-center">
+                    <Zap className="w-4 h-4 text-brand-orange" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">New Alert</div>
+                    <div className="text-sm font-bold text-slate-900">MDR K. pneumoniae detected</div>
+                  </div>
                 </div>
               </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* Highlights Section */}
-      <section className="relative py-48 bg-white overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <div className="space-y-48">
-            <div className="grid lg:grid-cols-2 gap-24 items-center">
-              <FadeInWhenVisible>
-                <div className="relative">
-                  <div className="absolute -inset-12 bg-brand-orange/5 rounded-[4rem] blur-3xl"></div>
-                  <div className="relative bg-white p-12 rounded-[3rem] border border-slate-100 shadow-2xl aspect-video flex items-center justify-center overflow-hidden">
-                    <Dna className="w-48 h-48 text-brand-orange opacity-10 animate-pulse" />
-                    <div className="absolute inset-0 flex items-center justify-center flex-col gap-6">
-                        <div className="w-64 h-2 bg-slate-100 rounded-full overflow-hidden">
-                          <motion.div initial={{ width: 0 }} whileInView={{ width: '80%' }} transition={{ duration: 3, repeat: Infinity }} className="h-full bg-brand-orange"></motion.div>
+              {/* ─── Floating Card: Resistance Trend (top-right) ─── */}
+              <motion.div animate={{ y: [0, 6, 0] }} transition={{ duration: 6, repeat: Infinity, delay: 0.5 }}
+                className="absolute top-4 right-0 md:right-2 z-10">
+                <div className="bg-white border border-slate-200 rounded-2xl px-5 py-4 shadow-lg w-[180px]">
+                  <div className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-1">Resistance Rate</div>
+                  <div className="flex items-baseline gap-2 mb-3">
+                    <span className="text-2xl font-bold text-brand-orange font-display">+34%</span>
+                    <span className="text-xs text-slate-400">/mo</span>
+                    <BarChart3 className="w-4 h-4 text-brand-orange ml-auto" />
+                  </div>
+                  <div className="flex items-end gap-[3px] h-10">
+                    {[40, 55, 35, 60, 45, 70, 50, 80, 65, 90, 75, 95].map((h, i) => (
+                      <motion.div key={i}
+                        initial={{ height: 0 }}
+                        animate={{ height: `${h}%` }}
+                        transition={{ duration: 0.6, delay: 1 + i * 0.05 }}
+                        className={`flex-1 rounded-sm ${i >= 10 ? 'bg-brand-orange' : 'bg-slate-200'}`}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1 mt-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-brand-orange" />
+                    <span className="text-[9px] text-slate-400">Jan — Jun 2026 · AI-tracked</span>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* ─── Main Card: Dashboard ─── */}
+              <div className="relative z-10 w-[280px] md:w-[300px] mt-16">
+                <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xl shadow-slate-200/80">
+                  {/* Window chrome */}
+                  <div className="flex items-center gap-4 px-4 py-3 border-b border-slate-100 bg-slate-50/60">
+                    <div className="flex gap-1.5">
+                      <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-mono">zenthera.ai · dashboard</span>
+                  </div>
+
+                  <div className="p-5">
+                    <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Pipeline Accuracy</div>
+                    <div className="flex items-baseline gap-3 mb-5">
+                      <span className="text-4xl font-bold text-slate-900 font-display">98<span className="text-xl">%</span></span>
+                      <span className="text-xs font-bold text-brand-orange bg-brand-orange/10 px-2 py-0.5 rounded-full">+12% ↑</span>
+                    </div>
+
+                    <div className="space-y-3">
+                      {[
+                        { code: 'ME', name: 'Meropenem', detail: 'Carbapenem', score: 96, resistant: true },
+                        { code: 'CI', name: 'Ciprofloxacin', detail: 'Fluoroquinolone', score: 94, resistant: true },
+                        { code: 'AM', name: 'Amikacin', detail: 'Aminoglycoside', score: 97, resistant: false },
+                      ].map((row) => (
+                        <div key={row.code} className="flex items-center gap-3 bg-slate-50 rounded-xl px-3 py-2.5">
+                          <div className="w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold" style={{ background: row.resistant ? 'rgba(248,113,113,0.12)' : 'rgba(52,211,153,0.12)', color: row.resistant ? '#ef4444' : '#10b981' }}>
+                            {row.code}
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-sm font-bold text-slate-900">{row.name}</div>
+                            <div className="text-[10px] text-slate-400">{row.detail}</div>
+                          </div>
+                          <span className="text-sm font-bold text-slate-500">{row.score}</span>
                         </div>
-                        <div className="text-xs font-mono text-slate-400 tracking-widest">ANALYZING GENOME...</div>
+                      ))}
+                    </div>
+
+                    <div className="mt-5 flex items-center justify-between mb-2">
+                      <span className="text-[10px] text-slate-400 uppercase tracking-wider">Weekly target</span>
+                      <span className="text-xs font-bold text-slate-500">78%</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <motion.div initial={{ width: 0 }} animate={{ width: '78%' }}
+                        transition={{ duration: 1.5, delay: 0.8, ease: 'easeOut' }}
+                        className="h-full bg-gradient-to-r from-brand-orange to-brand-orange-light rounded-full" />
                     </div>
                   </div>
                 </div>
-              </FadeInWhenVisible>
-              <FadeInWhenVisible delay={0.2}>
-                <div>
-                  <div className="text-brand-orange font-bold uppercase tracking-widest text-sm mb-6">Vigilance</div>
-                  <h2 className="text-6xl font-bold mb-8 leading-tight">FASTA Sequence Analysis</h2>
-                  <p className="text-2xl text-slate-600 leading-relaxed mb-10 font-light">Our advanced processing engine extracts structural variants and k-mer signatures from raw genomic data with near-zero latency.</p>
-                  <button className="px-12 py-6 bg-slate-900 text-white rounded-full font-bold hover:bg-brand-orange transition-all shadow-xl shadow-brand-orange/10 uppercase text-xs tracking-widest">Explore Platform</button>
-                </div>
-              </FadeInWhenVisible>
-            </div>
+              </div>
 
-            <div className="grid lg:grid-cols-2 gap-24 items-center">
-              <FadeInWhenVisible className="order-2 lg:order-1">
-                <div>
-                  <div className="text-brand-orange font-bold uppercase tracking-widest text-sm mb-6">Vengeance</div>
-                  <h2 className="text-6xl font-bold mb-8 leading-tight">Predictive AI Intelligence</h2>
-                  <p className="text-2xl text-slate-600 leading-relaxed mb-10 font-light">Up to 94% precision across 35 major antibiotic classes, providing actionable clinical insights for immediate intervention.</p>
-                  <ul className="space-y-6">
-                    {['Random Forest Classifiers', 'Susceptibility Scoring', 'Mechanism Detection'].map((item, idx) => (
-                      <motion.li 
-                        key={idx} 
-                        initial={{ opacity: 0, x: -20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: idx * 0.1 }}
-                        className="flex items-center gap-4 text-slate-700 text-lg"
-                      >
-                        <div className="w-6 h-6 rounded-full bg-brand-orange/10 flex items-center justify-center">
-                          <div className="w-2 h-2 bg-brand-orange rounded-full"></div>
-                        </div>
-                        {item}
-                      </motion.li>
-                    ))}
-                  </ul>
-                </div>
-              </FadeInWhenVisible>
-              <FadeInWhenVisible delay={0.2} className="order-1 lg:order-2">
-                <div className="relative bg-slate-900 rounded-[3rem] p-12 aspect-video flex items-center justify-center overflow-hidden shadow-2xl">
-                  <div className="grid grid-cols-4 gap-6 w-full">
-                    {Array.from({ length: 12 }).map((_, i) => (
-                      <motion.div key={i} initial={{ opacity: 0.1 }} whileInView={{ opacity: [0.1, 0.8, 0.1] }} transition={{ duration: 2, delay: i * 0.1, repeat: Infinity }} className="h-16 bg-brand-orange/20 rounded-xl" />
-                    ))}
+              {/* ─── Floating Card: AI Score (bottom-right) ─── */}
+              <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: 4.5, repeat: Infinity, delay: 1 }}
+                className="absolute bottom-6 right-0 md:right-4 z-10">
+                <div className="flex items-center gap-3 bg-brand-orange text-white rounded-2xl px-4 py-3 shadow-lg shadow-brand-orange/20">
+                  <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
+                    <Shield className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wider font-bold opacity-80">AI Confidence</div>
+                    <div className="text-lg font-bold font-display">97 · High Trust</div>
                   </div>
                 </div>
-              </FadeInWhenVisible>
-            </div>
+              </motion.div>
+            </motion.div>
+          </div>
+        </motion.div>
+
+        {/* Bottom scroll indicator */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-20">
+          <span className="text-[10px] uppercase tracking-[0.3em] text-slate-400 font-medium">Scroll</span>
+          <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 1.5, repeat: Infinity }}
+            className="w-5 h-8 border-2 border-slate-300 rounded-full flex justify-center pt-1.5">
+            <div className="w-1 h-1.5 bg-brand-orange rounded-full" />
+          </motion.div>
+        </motion.div>
+      </section>
+
+
+      {/* ═══════════════════════════════════════════
+          ABOUT / INTRO SECTION
+          ═══════════════════════════════════════════ */}
+      <section id="section-about" className="relative py-32 md:py-40 bg-white overflow-hidden">
+        {/* Dotted gradient background */}
+        <div className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundSize: '24px 24px',
+            backgroundImage: 'radial-gradient(circle, rgba(241,90,36,0.06) 1px, transparent 1px)',
+            maskImage: 'radial-gradient(ellipse 50% 50% at 20% 30%, black 0%, transparent 70%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 50% 50% at 20% 30%, black 0%, transparent 70%)',
+          }}
+        />
+        {/* Soft gradient orbs */}
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-brand-orange/[0.04] rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-brand-orange/[0.05] rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-orange-50/60 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute top-[20%] left-[20%] w-[250px] h-[250px] bg-brand-orange/[0.06] rounded-full blur-[80px] pointer-events-none" />
+        <div className="absolute bottom-[20%] right-[30%] w-[350px] h-[350px] bg-orange-200/20 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-[60%] right-[10%] w-[200px] h-[200px] bg-brand-orange/[0.04] rounded-full blur-[70px] pointer-events-none" />
+        <div className="absolute bottom-[10%] left-[40%] w-[150px] h-[150px] bg-orange-100/40 rounded-full blur-[60px] pointer-events-none" />
+        {/* Decorative DNA sequence text */}
+        <div className="absolute top-20 left-8 text-[11px] font-mono text-slate-100 leading-loose pointer-events-none select-none tracking-[0.3em] rotate-90 origin-left">ATCGATCGATCGATCGATCGATCG</div>
+        <div className="absolute bottom-16 right-12 text-[11px] font-mono text-slate-100 leading-loose pointer-events-none select-none tracking-[0.3em]">GCTAGCTAGCTAGCTA</div>
+        {/* Decorative circles */}
+        <div className="absolute top-1/4 right-[5%] w-48 h-48 rounded-full border border-orange-100/40 pointer-events-none" />
+        <div className="absolute top-1/3 right-[7%] w-32 h-32 rounded-full border border-orange-100/30 pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
+          <div className="grid lg:grid-cols-2 gap-20 items-center">
+            <Reveal>
+              <div>
+                <div className="text-brand-orange text-xs font-bold uppercase tracking-[0.25em] mb-4">About Zenthera</div>
+                <h2 className="font-display text-5xl md:text-6xl font-bold text-slate-900 leading-tight mb-8">
+                  Decoding resistance.<br />
+                  <span className="text-brand-orange">Saving lives.</span>
+                </h2>
+                <p className="text-lg text-slate-500 leading-relaxed mb-8 font-light">
+                  Zenthera combines deterministic gene scanning with machine learning to predict antimicrobial resistance from raw genomic sequences. Our dual-layer pipeline processes FASTA files in real-time, delivering clinical-grade susceptibility profiles across 35 antibiotic classes.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  {['CARD Database', 'Mutation Detection', 'K-mer Analysis', 'Ensemble ML'].map((tag) => (
+                    <span key={tag} className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-full text-xs font-semibold text-slate-600 uppercase tracking-wider">{tag}</span>
+                  ))}
+                </div>
+              </div>
+            </Reveal>
+            <Reveal delay={0.2}>
+              <div className="relative">
+                <div className="absolute -inset-8 bg-gradient-to-br from-brand-orange/10 to-orange-50 rounded-[3rem] blur-2xl opacity-60" />
+                <div className="relative bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl p-10 aspect-square flex items-center justify-center overflow-hidden">
+                  <video autoPlay loop muted playsInline className="w-full h-full object-cover rounded-2xl">
+                    <source src="/dnaanimation.mp4" type="video/mp4" />
+                  </video>
+                  <div className="absolute inset-0 bg-gradient-to-t from-white/60 via-transparent to-transparent" />
+                  <div className="absolute bottom-8 left-8 right-8 bg-white/90 backdrop-blur-md rounded-2xl p-5 border border-orange-100">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-brand-orange rounded-lg flex items-center justify-center">
+                        <Dna className="w-4 h-4 text-white" />
+                      </div>
+                      <span className="text-sm font-bold text-slate-900">Genome Analysis</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <motion.div initial={{ width: 0 }} whileInView={{ width: '85%' }} transition={{ duration: 2, ease: 'easeOut' }}
+                        className="h-full bg-gradient-to-r from-brand-orange to-brand-orange-light rounded-full" />
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-2 font-mono tracking-wider">PROCESSING K-MERS...</div>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
           </div>
         </div>
       </section>
 
-      {/* Workflow Section */}
-      <section className="bg-slate-900 text-white py-48 relative overflow-hidden">
-        {/* Subtle grid for dark mode */}
-        <div className="absolute inset-0 z-0 opacity-[0.05]"
+      {/* ═══════════════════════════════════════════
+          FEATURES GRID
+          ═══════════════════════════════════════════ */}
+      <section className="relative py-32 bg-slate-50 overflow-hidden">
+        {/* Dotted gradient — right side */}
+        <div className="absolute inset-0 pointer-events-none"
           style={{
-            backgroundSize: '60px 60px',
-            backgroundImage: `linear-gradient(to right, white 1px, transparent 1px),
-                             linear-gradient(to bottom, white 1px, transparent 1px)`,
+            backgroundSize: '28px 28px',
+            backgroundImage: 'radial-gradient(circle, rgba(241,90,36,0.07) 1px, transparent 1px)',
+            maskImage: 'radial-gradient(ellipse 40% 60% at 85% 50%, black 0%, transparent 70%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 40% 60% at 85% 50%, black 0%, transparent 70%)',
           }}
         />
-
-        <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-24 gap-8">
-            <FadeInWhenVisible>
-              <div className="text-brand-orange font-bold uppercase tracking-widest text-sm mb-6">Workflow</div>
-              <h2 className="text-6xl font-bold">How To Work With Us</h2>
-            </FadeInWhenVisible>
-            <FadeInWhenVisible delay={0.2}>
-              <p className="text-slate-400 text-xl max-w-sm font-light">A streamlined process from genomic sequence to clinical insight.</p>
-            </FadeInWhenVisible>
-          </div>
-
-          <div className="grid md:grid-cols-4 gap-12 relative">
-            <div className="hidden md:block absolute top-12 left-0 right-0 h-px bg-slate-800"></div>
-            {[
-              { step: "01", title: "Sequence Upload", desc: "Securely upload your FASTA or FNA genome files to our HIPAA-compliant nodes." },
-              { step: "02", title: "AI Extraction", desc: "Our engine signatures k-mers and structural variants automatically." },
-              { step: "03", title: "AMR Prediction", desc: "Real-time susceptibility calculation for 35+ drug classes." },
-              { step: "04", title: "Export Report", desc: "Download detailed clinical PDF reports for your local diagnostics." }
-            ].map((item, idx) => (
-              <motion.div 
-                key={idx} 
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.15 }}
-                className="relative z-10 group"
-              >
-                <div className="w-24 h-24 bg-slate-900 border border-slate-700 rounded-3xl flex items-center justify-center mb-8 group-hover:border-brand-orange group-hover:shadow-[0_0_30px_rgba(241,90,36,0.2)] transition-all">
-                  <span className="text-4xl font-bold text-brand-orange">{item.step}</span>
-                </div>
-                <h3 className="text-2xl font-bold mb-4">{item.title}</h3>
-                <p className="text-slate-400 leading-relaxed font-light">{item.desc}</p>
-              </motion.div>
+        {/* Gradient orbs */}
+        <div className="absolute -top-20 -left-20 w-[300px] h-[300px] bg-brand-orange/[0.05] rounded-full blur-[80px] pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-brand-orange/[0.04] rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute top-1/3 right-[15%] w-[250px] h-[250px] bg-orange-100/30 rounded-full blur-[80px] pointer-events-none" />
+        <div className="absolute bottom-[25%] left-[10%] w-[350px] h-[350px] bg-brand-orange/[0.06] rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-[10%] left-[40%] w-[200px] h-[200px] bg-orange-200/25 rounded-full blur-[70px] pointer-events-none" />
+        <div className="absolute top-[60%] right-[35%] w-[300px] h-[300px] bg-brand-orange/[0.03] rounded-full blur-[90px] pointer-events-none" />
+        {/* DNA text accents */}
+        <div className="absolute top-16 right-16 text-[10px] font-mono text-slate-200 pointer-events-none select-none tracking-[0.4em]">ATCG·GCTA·TTAA</div>
+        <div className="absolute bottom-20 left-16 text-[10px] font-mono text-slate-200 pointer-events-none select-none tracking-[0.4em]">CTAG·AATT·GGCC</div>
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
+          <Reveal>
+            <div className="text-center mb-20">
+              <div className="text-brand-orange text-xs font-bold uppercase tracking-[0.25em] mb-4">Capabilities</div>
+              <h2 className="font-display text-5xl md:text-6xl font-bold text-slate-900 mb-6">
+                Built for <span className="text-brand-orange">precision</span>
+              </h2>
+              <p className="text-lg text-slate-500 max-w-2xl mx-auto font-light">
+                Every component engineered for clinical-grade antimicrobial resistance prediction.
+              </p>
+            </div>
+          </Reveal>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {features.map((f, i) => (
+              <Reveal key={i} delay={i * 0.08}>
+                <motion.div whileHover={{ y: -8 }} transition={{ type: 'spring', stiffness: 300 }}
+                  className="group bg-white p-8 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:border-orange-100 transition-all cursor-pointer h-full">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="w-12 h-12 bg-brand-orange/10 rounded-2xl flex items-center justify-center group-hover:bg-brand-orange transition-colors">
+                      <f.icon className="w-5 h-5 text-brand-orange group-hover:text-white transition-colors" />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 bg-slate-50 px-3 py-1 rounded-full">{f.tag}</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">{f.title}</h3>
+                  <p className="text-slate-500 text-sm leading-relaxed">{f.desc}</p>
+                  <div className="mt-6 flex items-center gap-1 text-brand-orange text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                    Explore <ChevronRight className="w-3 h-3" />
+                  </div>
+                </motion.div>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-slate-100 pt-32 pb-16 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <div className="grid md:grid-cols-4 gap-16 mb-24">
-            <div className="col-span-2">
-               <div className="flex items-center gap-3 mb-10">
-                <div className="w-10 h-10 bg-brand-orange rounded-xl flex items-center justify-center shadow-lg shadow-brand-orange/20">
-                  <span className="text-white font-bold text-2xl">Z</span>
-                </div>
-                <span className="text-3xl font-bold tracking-tight text-slate-900 font-serif italic text-[2.5rem]">Zenthera<span className="text-brand-orange">AI</span></span>
+      {/* ═══════════════════════════════════════════
+          WORKFLOW / HOW IT WORKS
+          ═══════════════════════════════════════════ */}
+      <section className="relative py-32 md:py-40 bg-brand-dark text-white overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.04]"
+          style={{ backgroundSize: '50px 50px', backgroundImage: 'linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-orange/10 rounded-full blur-[150px] pointer-events-none" />
+        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-brand-orange/[0.08] rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-0 left-[10%] w-[300px] h-[300px] bg-brand-orange/[0.06] rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute top-[20%] left-[20%] w-[200px] h-[200px] bg-orange-500/[0.05] rounded-full blur-[80px] pointer-events-none" />
+        <div className="absolute bottom-[30%] right-[20%] w-[250px] h-[250px] bg-orange-400/[0.07] rounded-full blur-[90px] pointer-events-none" />
+
+        <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
+            <Reveal>
+              <div>
+                <div className="text-brand-orange text-xs font-bold uppercase tracking-[0.25em] mb-4">Workflow</div>
+                <h2 className="font-display text-5xl md:text-6xl font-bold leading-tight">
+                  From sequence<br />to <span className="text-brand-orange">insight</span>
+                </h2>
               </div>
-              <p className="text-slate-500 text-xl font-light max-w-sm mb-10 leading-relaxed">Empowering clinical diagnostics with predictive AI and high-performance computational biology.</p>
+            </Reveal>
+            <Reveal delay={0.2}>
+              <p className="text-slate-400 text-lg max-w-sm font-light leading-relaxed">Four steps from raw genomic data to actionable clinical intelligence.</p>
+            </Reveal>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-8 relative">
+            <div className="hidden md:block absolute top-16 left-[12%] right-[12%] h-px bg-gradient-to-r from-transparent via-brand-orange/30 to-transparent" />
+            {steps.map((s, i) => (
+              <Reveal key={i} delay={i * 0.12}>
+                <div className="relative group">
+                  <div className="w-16 h-16 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center mb-8 group-hover:border-brand-orange/50 group-hover:bg-brand-orange/10 transition-all">
+                    <span className="text-2xl font-display font-bold text-brand-orange">{s.num}</span>
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">{s.title}</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed font-light">{s.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════
+          CTA SECTION
+          ═══════════════════════════════════════════ */}
+      <section className="relative py-32 bg-white overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-50 to-white" />
+        {/* Dotted gradient — centered */}
+        <div className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundSize: '32px 32px',
+            backgroundImage: 'radial-gradient(circle, rgba(241,90,36,0.08) 1px, transparent 1px)',
+            maskImage: 'radial-gradient(ellipse 60% 60% at 50% 50%, black 0%, transparent 70%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 60% 60% at 50% 50%, black 0%, transparent 70%)',
+          }}
+        />
+        {/* Radial circles & Orbs */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-orange-100/30 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] rounded-full border border-orange-100/20 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full bg-brand-orange/[0.04] blur-[60px] pointer-events-none" />
+        <div className="absolute top-[10%] left-[15%] w-[250px] h-[250px] rounded-full bg-brand-orange/[0.06] blur-[90px] pointer-events-none" />
+        <div className="absolute bottom-[10%] right-[15%] w-[300px] h-[300px] rounded-full bg-orange-200/30 blur-[100px] pointer-events-none" />
+        <div className="absolute top-[60%] left-[30%] w-[150px] h-[150px] rounded-full bg-brand-orange/[0.05] blur-[70px] pointer-events-none" />
+        <div className="absolute top-[20%] right-[25%] w-[200px] h-[200px] rounded-full bg-orange-100/40 blur-[80px] pointer-events-none" />
+        <div className="relative z-10 max-w-4xl mx-auto px-6 md:px-12 text-center">
+          <Reveal>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-brand-orange/10 rounded-full border border-brand-orange/20 mb-8">
+              <Zap className="w-3 h-3 text-brand-orange" />
+              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-brand-orange">Ready to begin?</span>
+            </div>
+            <h2 className="font-display text-5xl md:text-7xl font-bold text-slate-900 mb-8 leading-tight">
+              Start predicting<br />resistance <span className="text-brand-orange">today</span>
+            </h2>
+            <p className="text-xl text-slate-500 max-w-xl mx-auto mb-12 font-light leading-relaxed">
+              Upload your FASTA genome file and receive clinical-grade AMR predictions in under a second.
+            </p>
+            <button onClick={() => navigate('/dashboard')}
+              className="group inline-flex items-center gap-3 px-10 py-5 bg-brand-orange text-white rounded-full text-sm font-bold tracking-wide uppercase shadow-2xl shadow-brand-orange/30 hover:shadow-brand-orange/50 hover:scale-[1.03] transition-all">
+              Launch Dashboard
+              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════
+          FOOTER
+          ═══════════════════════════════════════════ */}
+      <footer className="bg-brand-dark text-white pt-24 pb-12">
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
+          <div className="grid md:grid-cols-4 gap-16 mb-20">
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-brand-orange rounded-xl flex items-center justify-center">
+                  <span className="text-white font-bold text-xl">Z</span>
+                </div>
+                <span className="text-2xl font-bold tracking-tight font-display">
+                  Zenthera<span className="text-brand-orange">AI</span>
+                </span>
+              </div>
+              <p className="text-slate-400 text-base max-w-sm leading-relaxed font-light">
+                Empowering clinical diagnostics with predictive AI and high-performance computational biology.
+              </p>
             </div>
             <div>
-              <h4 className="font-bold mb-8 uppercase tracking-widest text-[10px] text-slate-400">Platform</h4>
-              <ul className="space-y-6 text-slate-600 font-medium">
+              <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-6">Platform</h4>
+              <ul className="space-y-4 text-slate-400 text-sm">
                 <li className="hover:text-brand-orange cursor-pointer transition-colors">AMR Prediction</li>
                 <li className="hover:text-brand-orange cursor-pointer transition-colors">FASTA Analysis</li>
                 <li className="hover:text-brand-orange cursor-pointer transition-colors">Clinical Reports</li>
               </ul>
             </div>
             <div>
-              <h4 className="font-bold mb-8 uppercase tracking-widest text-[10px] text-slate-400">Company</h4>
-              <ul className="space-y-6 text-slate-600 font-medium">
+              <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-6">Company</h4>
+              <ul className="space-y-4 text-slate-400 text-sm">
                 <li className="hover:text-brand-orange cursor-pointer transition-colors">About Us</li>
                 <li className="hover:text-brand-orange cursor-pointer transition-colors">Documentation</li>
                 <li className="hover:text-brand-orange cursor-pointer transition-colors">Contact</li>
               </ul>
             </div>
           </div>
-          <div className="pt-12 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center text-sm text-slate-400 gap-6">
-            <p>© 2024 Zenthera AI. All rights reserved.</p>
-            <div className="flex gap-8">
+          <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-xs text-slate-500 gap-4">
+            <p>© 2026 Zenthera AI. All rights reserved.</p>
+            <div className="flex gap-6">
               <span className="hover:text-brand-orange cursor-pointer transition-colors">Privacy</span>
               <span className="hover:text-brand-orange cursor-pointer transition-colors">Terms</span>
             </div>
