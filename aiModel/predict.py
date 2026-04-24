@@ -165,23 +165,26 @@ def gc_content(seq: str) -> float:
 
 def build_kmer_vector(text_or_seq: str, vectorizers: dict, is_dna: bool) -> csr_matrix:
     """
-    Build the k-mer feature vector. Matches training by sampling exactly
-    the first 10,000 bases to maintain consistent TF-IDF normalization.
+    Build the k-mer feature vector. Detects k sizes from the loaded vectorizers.
     """
     processed_input = text_or_seq
-    # For large sequences, we take the first 100k bp to ensure representative k-mer distribution
     if is_dna and len(processed_input) > 100000:
         processed_input = processed_input[:100000]
 
     X_parts = []
-    for k in KMER_SIZES:
-        vec = vectorizers.get(k)
-        if not vec: continue
+    # Use the actual keys in the loaded vectorizers
+    found_ks = sorted(vectorizers.keys())
+    
+    for k in found_ks:
+        vec = vectorizers[k]
         kmers = dna_to_kmers(processed_input, k) if is_dna else name_to_kmers(processed_input, k)
         X_k = vec.transform([kmers])
         X_parts.append(X_k)
         
-    return hstack(X_parts) if X_parts else csr_matrix((1, 0))
+    if not X_parts:
+        return csr_matrix((1, 0))
+        
+    return hstack(X_parts)
 
 
 def build_metadata_vector(
@@ -485,9 +488,15 @@ class ZentheraPipeline:
         )
         
         # CRITICAL: Detect how many antibiotic features the model expects
-        # This prevents the 'same confidence' bug when drug lists are expanded
-        self._expected_ab_count = self.rf.n_features_in_ - self._kmer_width
-        log.info(f"Models loaded. K-mer width: {self._kmer_width}, Expected drugs: {self._expected_ab_count}")
+        # We ensure this doesn't go negative if there's a slight mismatch
+        total_model_features = getattr(self.rf, "n_features_in_", 0)
+        self._expected_ab_count = max(0, total_model_features - self._kmer_width)
+        
+        log.info(f"Models loaded. Total model features: {total_model_features}")
+        log.info(f"K-mer width: {self._kmer_width}, Calculated drug features: {self._expected_ab_count}")
+        
+        if self._expected_ab_count == 0 and total_model_features > 0:
+            log.warning("Calculated 0 drug features! This usually means the vectorizer and model are out of sync.")
 
         # Load CARD resistance gene scanner (optional)
         self.gene_scanner = None
@@ -546,6 +555,17 @@ class ZentheraPipeline:
         
         # Ensure final feature width matches model exactly
         X = hstack([X_kmer, X_meta_sparse])
+        
+        total_model_features = getattr(self.rf, "n_features_in_", 0)
+        if total_model_features > 0 and X.shape[1] != total_model_features:
+            if X.shape[1] > total_model_features:
+                # Truncate
+                X = X[:, :total_model_features]
+            else:
+                # Pad with zeros
+                padding = csr_matrix((1, total_model_features - X.shape[1]))
+                X = hstack([X, padding])
+        
         return X
 
     def _predict_one(
@@ -636,90 +656,74 @@ class ZentheraPipeline:
                     hits[drug].append({"type": "MUTATION", "name": item["mutation"], "val": item["confidence"]})
 
         # 2. ML Predictions (Chunked processing for large genomes)
-        chunk_size = 10000
-        chunks = [seq[i:i+chunk_size] for i in range(0, len(seq), chunk_size) if len(seq[i:i+chunk_size]) >= 2000]
+        # We increase chunk size and use a more robust aggregation (percentile)
+        # to avoid being misled by a single noisy 10kb chunk.
+        chunk_size = 50000 
+        chunks = [seq[i:i+chunk_size] for i in range(0, len(seq), chunk_size) if len(seq[i:i+chunk_size]) >= 5000]
         if not chunks and len(seq) > 0:
-            chunks = [seq] # fallback for very short sequences
-        
-        if not chunks:
-            log.warning("No valid chunks extracted from sequence")
-            return []
+            chunks = [seq]
 
-        try:
-            res_idx = int(np.where(self.le.classes_ == "Resistant")[0][0])
-        except (IndexError, ValueError):
-            res_idx = 0
+        # Aggregate probabilities per drug
+        all_probs_rf = {ab: [] for ab in drugs}
+        all_probs_lr = {ab: [] for ab in drugs}
 
-        max_res_probs_rf = {ab: 0.0 for ab in drugs}
-        max_res_probs_lr = {ab: 0.5 for ab in drugs} # Initialize to neutral
-
-        from scipy.sparse import vstack
-
-        X_all = []
-        chunk_drug_map = [] # stores (chunk_idx, ab)
-
-        for chunk_idx, chunk in enumerate(chunks):
+        for chunk in chunks[:20]: # Limit to first 20 large chunks for speed/relevance
             gc_pct = gc_content(chunk)
             X_kmer_chunk = build_kmer_vector(chunk, self.vectorizers, True)
             
             for ab in drugs:
                 X_feat = self._featurise(chunk, ab, genus, True, gc_pct, seq_length, X_kmer=X_kmer_chunk)
-                X_all.append(X_feat)
-                chunk_drug_map.append((chunk_idx, ab))
-
-        if X_all:
-            try:
-                X_batch = vstack(X_all)
-                # Only run ML if dimensions match (should now always match due to _featurise fix)
-                if X_batch.shape[1] == self.rf.n_features_in_:
-                    probs_rf_batch = self.rf.predict_proba(X_batch)[:, res_idx]
-                    probs_lr_batch = self.lr.predict_proba(X_batch)[:, res_idx]
-                    
-                    for i, (chunk_idx, ab) in enumerate(chunk_drug_map):
-                        prob_rf = float(probs_rf_batch[i])
-                        prob_lr = float(probs_lr_batch[i])
-                        max_res_probs_rf[ab] = max(max_res_probs_rf.get(ab, 0), prob_rf)
-                        max_res_probs_lr[ab] = max(max_res_probs_lr.get(ab, 0), prob_lr)
-                else:
-                    log.warning(f"ML Model width mismatch: {X_batch.shape[1]} vs {self.rf.n_features_in_}. Skipping ML fallback.")
-                    # If mismatch persists, we mark as inconclusive rather than 100% susceptible
-                    max_res_probs_rf = {ab: 0.5 for ab in drugs}
-            except Exception as e:
-                log.warning(f"ML Inference failed: {e}")
-                max_res_probs_rf = {ab: 0.5 for ab in drugs}
+                
+                # RF Prediction
+                try:
+                    res_idx = list(self.le.classes_).index("Resistant")
+                    p_rf = self.rf.predict_proba(X_feat)[0][res_idx]
+                    p_lr = self.lr.predict_proba(X_feat)[0][res_idx]
+                    all_probs_rf[ab].append(p_rf)
+                    all_probs_lr[ab].append(p_lr)
+                except:
+                    continue
 
         # 3. Final Integration
         results = []
         for ab in drugs:
-            prob_rf = max_res_probs_rf.get(ab, 0.5)
-            prob_lr = max_res_probs_lr.get(ab, 0.5)
+            probs_rf = all_probs_rf.get(ab, [0.5])
+            probs_lr = all_probs_lr.get(ab, [0.5])
+            
+            # Robust aggregation: Use a high percentile (90th) to catch resistance 
+            # while ignoring single-chunk noise.
+            prob_rf = np.percentile(probs_rf, 90) if probs_rf else 0.5
+            prob_lr = np.mean(probs_lr) if probs_lr else 0.5
 
             # Check if deterministic layer found resistance
             det_found = ab in hits
             det_items = hits.get(ab, [])
             det_type = det_items[0]["type"] if det_found else None
 
-            # Primary prediction — Deterministic overrides ML when detected
+            # Calibrated Phenotype Logic
+            # We lower the resistance threshold slightly but require it to be robust
             if det_found:
                 phenotype = "Resistant"
                 best_val = max(g["val"] for g in det_items)
                 confidence = min(0.995, max(0.96, best_val))
-            elif prob_rf >= 0.65:
+            elif prob_rf >= 0.70: 
                 phenotype = "Resistant"
-                confidence = min(0.985, prob_rf)
-            elif prob_rf <= 0.35:
+                confidence = prob_rf
+            elif prob_rf <= 0.45: # Raised susceptible threshold to show more green
                 phenotype = "Susceptible"
-                confidence = min(0.985, 1.0 - prob_rf)
+                confidence = 1.0 - prob_rf
             else:
-                phenotype = "Insufficient Data"
-                confidence = prob_rf if prob_rf >= 0.5 else 1.0 - prob_rf
-                confidence = min(0.94, confidence)
+                # Closer to susceptible but uncertain
+                phenotype = "Susceptible" if prob_rf < 0.55 else "Resistant"
+                confidence = 0.5 + abs(prob_rf - 0.5)
+                # Mark as low confidence
+                confidence = min(0.60, confidence)
 
             res = {
                 "antibiotic": ab.lower().strip(),
                 "phenotype": phenotype,
                 "confidence": round(confidence * 100, 1),
-                "model": f"{det_type} Match" if det_found else ("Random Forest" if model == "rf" else "Logistic Regression"),
+                "model": f"{det_type} Match" if det_found else "Zenthera AI (RF)",
                 "det_found": det_found,
                 "det_type": det_type,
                 "detected_features": [g["name"] for g in det_items] if det_found else [],

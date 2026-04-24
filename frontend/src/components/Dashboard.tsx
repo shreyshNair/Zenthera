@@ -51,6 +51,10 @@ const Dashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [clinicalData, setClinicalData] = useState<any>(null);
   const [recommendations, setRecommendations] = useState<any>(null);
+  const [patientName, setPatientName] = useState('');
+  const [patientAge, setPatientAge] = useState('');
+  const [patientDob, setPatientDob] = useState('');
+  const [patientGender, setPatientGender] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'resistant' | 'susceptible'>('all');
 
@@ -79,6 +83,11 @@ const Dashboard: React.FC = () => {
   }, []);
 
   const handleFileUpload = async (file: File) => {
+    if (!patientName.trim()) {
+      setError('Please enter a Patient Name before uploading.');
+      return;
+    }
+    
     setError(null);
     const newFile: UploadedFile = {
       id: Math.random().toString(36).substr(2, 9),
@@ -102,7 +111,7 @@ const Dashboard: React.FC = () => {
 
     try {
       setIsAnalyzing(true);
-      const apiResult = await uploadGenome(file);
+      const apiResult = await uploadGenome(file, patientName, patientAge, patientDob, patientGender);
       
       setUploadedFiles(prev => prev.map(f => 
         f.id === newFile.id ? { ...f, status: 'complete', progress: 100 } : f
@@ -142,59 +151,32 @@ const Dashboard: React.FC = () => {
     <div className="min-h-screen bg-bg-primary selection:bg-brand-orange selection:text-white transition-colors duration-500">
       <Navbar />
 
-      {/* Page Header */}
-      <header className="pt-32 pb-16 border-b border-border-main bg-bg-secondary/50">
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col md:flex-row md:items-end justify-between gap-8"
-          >
-            <div>
-              <div className="flex items-center gap-3 text-brand-orange mb-4 font-bold uppercase tracking-[0.2em] text-sm">
-                <Activity className="w-5 h-5" />
-                <span>Diagnostic Portal</span>
-              </div>
-              <h1 className="text-5xl md:text-7xl font-serif italic text-text-primary leading-none">
-                {activeTab === 'vigilance' ? 'Vigilance' : 'Vengeance'}
-              </h1>
-              <p className="mt-6 text-xl text-text-secondary max-w-2xl font-light">
-                {activeTab === 'vigilance' 
-                  ? 'Advanced processing engine for raw genomic data and k-mer signature extraction.' 
-                  : 'Actionable resistance predictions and susceptibility intelligence.'}
-              </p>
-            </div>
-            
-            <div className="flex gap-4">
+      <main className="max-w-7xl mx-auto px-6 md:px-12 pt-32 pb-24">
+        {/* Tab Switcher - Now more subtle and integrated */}
+        <div className="flex items-center justify-center mb-16">
+          <div className="flex bg-bg-secondary p-1.5 rounded-full border border-border-main shadow-inner">
+             {[
+               { id: 'vigilance', label: 'Vigilance', icon: Activity },
+               { id: 'vengeance', label: 'Vengeance', icon: ShieldCheck }
+             ].map((tab) => (
                <button 
-                onClick={() => setActiveTab('vigilance')}
-                className={`px-8 py-4 rounded-full text-sm font-bold tracking-wider uppercase transition-all ${
-                  activeTab === 'vigilance' 
-                    ? 'bg-text-primary text-bg-primary shadow-lg' 
-                    : 'bg-bg-primary text-text-secondary border border-border-main hover:border-brand-orange'
-                }`}
-              >
-                Vigilance
-              </button>
-                  <button 
-                onClick={() => setActiveTab('vengeance')}
-                disabled={results.length === 0}
-                className={`px-8 py-4 rounded-full text-sm font-bold tracking-wider uppercase transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
-                  activeTab === 'vengeance' 
-                    ? 'bg-text-primary text-bg-primary shadow-lg' 
-                    : 'bg-bg-primary text-text-secondary border border-border-main hover:border-brand-orange'
-                }`}
-              >
-                Vengeance
-              </button>
-            </div>
-          </motion.div>
+                 key={tab.id}
+                 onClick={() => setActiveTab(tab.id as any)}
+                 disabled={tab.id === 'vengeance' && results.length === 0}
+                 className={`flex items-center gap-2 px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest transition-all disabled:opacity-20 ${
+                   activeTab === tab.id 
+                     ? 'bg-brand-orange text-white shadow-lg' 
+                     : 'text-text-muted hover:text-text-secondary'
+                 }`}
+               >
+                 <tab.icon className="w-4 h-4" />
+                 {tab.label}
+               </button>
+             ))}
+          </div>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 md:px-12 py-16">
-        <AnimatePresence mode="wait">
+      <AnimatePresence mode="wait">
           {activeTab === 'vigilance' ? (
             <motion.div 
               key="vigilance"
@@ -205,6 +187,67 @@ const Dashboard: React.FC = () => {
             >
               {/* Upload Zone */}
               <div className="lg:col-span-2 space-y-8">
+                {/* Patient Information Input */}
+                <div className="bg-bg-secondary rounded-[2.5rem] p-8 border border-border-main shadow-lg">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-10 h-10 bg-brand-orange/10 rounded-xl flex items-center justify-center text-brand-orange">
+                      <ShieldCheck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-text-primary tracking-tight">Patient Information</h3>
+                      <p className="text-xs text-text-muted uppercase tracking-widest font-mono">Prerequisite for analysis</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] ml-2">Full Name</label>
+                      <input 
+                        type="text"
+                        value={patientName}
+                        onChange={(e) => setPatientName(e.target.value)}
+                        placeholder="John Doe"
+                        className="w-full bg-bg-primary border border-border-main rounded-2xl p-4 pl-6 text-text-primary focus:outline-none focus:border-brand-orange/50 transition-all text-sm font-medium placeholder:text-text-muted/30"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] ml-2">Age</label>
+                      <input 
+                        type="number"
+                        value={patientAge}
+                        onChange={(e) => setPatientAge(e.target.value)}
+                        placeholder="e.g. 45"
+                        className="w-full bg-bg-primary border border-border-main rounded-2xl p-4 pl-6 text-text-primary focus:outline-none focus:border-brand-orange/50 transition-all text-sm font-medium placeholder:text-text-muted/30"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] ml-2">Date of Birth</label>
+                      <input 
+                        type="date"
+                        value={patientDob}
+                        onChange={(e) => setPatientDob(e.target.value)}
+                        className="w-full bg-bg-primary border border-border-main rounded-2xl p-4 pl-6 text-text-primary focus:outline-none focus:border-brand-orange/50 transition-all text-sm font-medium [color-scheme:dark]"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] ml-2">Gender</label>
+                      <select 
+                        value={patientGender}
+                        onChange={(e) => setPatientGender(e.target.value)}
+                        className="w-full bg-bg-primary border border-border-main rounded-2xl p-4 pl-6 text-text-primary focus:outline-none focus:border-brand-orange/50 transition-all text-sm font-medium appearance-none"
+                      >
+                        <option value="">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other / Prefer not to say</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
                 {error && (
                   <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-[2rem] flex items-center gap-4 text-red-500">
                     <ShieldAlert className="w-6 h-6 flex-shrink-0" />
@@ -412,7 +455,7 @@ const Dashboard: React.FC = () => {
                         >
                           {/* Status Background Glow */}
                           <div className={`absolute -right-12 -top-12 w-32 h-32 rounded-full blur-[60px] opacity-10 transition-opacity group-hover:opacity-20 ${
-                            r.prediction === 'Resistant' ? 'bg-red-500' : 'bg-brand-orange'
+                            r.prediction === 'Resistant' ? 'bg-red-500' : 'bg-emerald-500'
                           }`} />
 
                           <div className="flex items-start justify-between mb-8">
@@ -420,7 +463,7 @@ const Dashboard: React.FC = () => {
                               <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold shadow-inner ${
                                 r.prediction === 'Resistant' 
                                   ? 'bg-red-500/10 text-red-500' 
-                                  : 'bg-brand-orange/10 text-brand-orange'
+                                  : 'bg-emerald-500/10 text-emerald-500'
                               }`}>
                                 {r.antibiotic.substring(0, 2).toUpperCase()}
                               </div>
@@ -444,7 +487,7 @@ const Dashboard: React.FC = () => {
                             <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] shadow-sm ${
                               r.prediction === 'Resistant' 
                                 ? 'bg-red-600 text-white ring-4 ring-red-500/10' 
-                                : 'bg-brand-orange text-white ring-4 ring-brand-orange/10'
+                                : 'bg-emerald-600 text-white ring-4 ring-emerald-500/10'
                             }`}>
                               {r.prediction}
                             </div>

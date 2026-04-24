@@ -31,9 +31,19 @@ const api = axios.create({
 /**
  * Uploads a genome file for resistance prediction.
  */
-export const uploadGenome = async (file: File): Promise<PredictionResult> => {
+export const uploadGenome = async (
+  file: File, 
+  patientName?: string,
+  age?: string,
+  dob?: string,
+  gender?: string
+): Promise<PredictionResult> => {
   const formData = new FormData();
   formData.append('fasta', file); // Matches backend expected field name
+  if (patientName) formData.append('patientName', patientName);
+  if (age) formData.append('patientAge', age);
+  if (dob) formData.append('patientDob', dob);
+  if (gender) formData.append('patientGender', gender);
 
   try {
     const response = await api.post('/predict', formData, {

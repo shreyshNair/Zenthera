@@ -19,6 +19,26 @@ from flask_cors import CORS
 # Import the prediction pipeline
 from predict import ZentheraPipeline, get_clinical_context, generate_recommendation, ANTIBIOTIC_INFO
 
+import pymongo
+from dotenv import load_dotenv
+from datetime import datetime
+
+# Load environment variables
+load_dotenv()
+
+# MongoDB Setup
+MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27010") # Default to local if not provided
+try:
+    client = pymongo.MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
+    db = client["zenthera"]
+    patients_col = db["patients"]
+    # Check connection
+    client.server_info()
+    logging.info("Connected to MongoDB successfully.")
+except Exception as e:
+    logging.warning(f"Could not connect to MongoDB: {e}. Data will not be saved.")
+    patients_col = None
+
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}}) # Explicitly allow all for /api/ routes
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50 MB max upload
@@ -1059,16 +1079,46 @@ def predict():
         clinical = get_clinical_context(header)
         recommendation = generate_recommendation(results, matched_genus=matched_genus)
 
-        return jsonify({
+        # Sanitize data for JSON/MongoDB (convert numpy types to standard python types)
+        def sanitize(obj):
+            if isinstance(obj, dict):
+                return {k: sanitize(v) for k, v in obj.items()}
+            if isinstance(obj, list):
+                return [sanitize(i) for i in obj]
+            if hasattr(obj, "item"): # Handle numpy types
+                return obj.item()
+            return obj
+
+        result_data = sanitize({
             "genome": genome_info,
             "predictions": predictions,
             "clinical": clinical,
             "recommendation": recommendation,
         })
 
+        # Save to MongoDB if patient name is provided
+        patient_name = request.form.get("patientName")
+        if patient_name and patients_col is not None:
+            try:
+                record = {
+                    "patient_name": patient_name,
+                    "patient_age": request.form.get("patientAge"),
+                    "patient_dob": request.form.get("patientDob"),
+                    "patient_gender": request.form.get("patientGender"),
+                    "timestamp": datetime.utcnow(),
+                    "analysis": result_data
+                }
+                inserted = patients_col.insert_one(record)
+                result_data["record_id"] = str(inserted.inserted_id)
+                log.info(f"Saved results for patient: {patient_name}")
+            except Exception as e:
+                log.error(f"Failed to save to MongoDB: {e}")
+
+        return jsonify(result_data)
+
     except Exception as e:
-        log.exception("Prediction error")
-        return jsonify({"error": str(e)}), 500
+        log.exception(f"Prediction error: {str(e)}")
+        return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
 
 
 # ── Main ───────────────────────────────────────────────────────────────────────
