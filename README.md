@@ -1,102 +1,143 @@
-# Zenthera: Clinical AI-Powered Antimicrobial Resistance (AMR) Diagnostics
+# Zenthera AI 🧬
 
-Zenthera is a state-of-the-art, high-fidelity clinical platform designed to predict antibiotic resistance patterns in bacterial genomes. It utilizes a **dual-layer hybrid diagnostic strategy**, combining deterministic genomic scanning with probabilistic Machine Learning to provide frontline clinicians with rapid, actionable resistance profiles.
+**Genomic Intelligence Platform for Predicting Antimicrobial Resistance (AMR) with DNA.**
 
-![Zenthera Landing Page](https://github.com/shreyshNair/Zenthera/blob/main/frontend/public/logo.png?raw=true)
+![Zenthera Banner](https://img.shields.io/badge/Status-Active_Development-emerald.svg)
+![React](https://img.shields.io/badge/Frontend-React_18_%7C_Vite-61DAFB?logo=react&logoColor=black)
+![Node](https://img.shields.io/badge/Backend-Node.js_%7C_Express-339933?logo=nodedotjs&logoColor=white)
+![Python](https://img.shields.io/badge/AI_Engine-Python_%7C_Flask-3776AB?logo=python&logoColor=white)
+![MongoDB](https://img.shields.io/badge/Database-MongoDB-47A248?logo=mongodb&logoColor=white)
 
----
-
-## 🧬 Diagnostic Architecture
-
-The Zenthera pipeline processes raw FASTA genomic data through a sophisticated multi-stage analysis engine:
-
-### 1. Hybrid Detection Strategy
-*   **Deterministic Layer (CARD & Mutation Scanning)**: 
-    *   **Gene Scanner**: Scans for known resistance genes using the Comprehensive Antibiotic Resistance Database (CARD).
-    *   **Mutation Scanner**: Identifies specific clinical mutations known to confer resistance (e.g., *gyrA* mutations for fluoroquinolones).
-*   **Probabilistic Layer (ML Pipeline)**: 
-    *   **Feature Engineering**: DNA k-mers (k=3, k=4) are transformed into high-dimensional vectors using TF-IDF normalization.
-    *   **Ensemble Models**: Random Forest and Logistic Regression models, trained on 15+ high-priority antibiotics from the BV-BRC database.
-
-### 2. Clinical Actionability
-The system produces a categorized resistance report for **35 antibiotics**, focusing on those most relevant to clinical practice in India and globally:
-
-| Antibiotic Class | Examples |
-|------------------|----------|
-| **Fluoroquinolones** | Ciprofloxacin, Levofloxacin, Moxifloxacin |
-| **Beta-lactams** | Amoxicillin, Ampicillin, Ceftriaxone, Cefuroxime |
-| **Carbapenems** | Meropenem, Imipenem |
-| **Polymyxins** | Colistin (Last-resort) |
-| **Aminoglycosides** | Gentamicin, Amikacin, Tobramycin |
-| **Glycopeptides** | Vancomycin, Teicoplanin (MRSA focus) |
-| **Anti-TB Drugs** | Rifampicin, Isoniazid, Pyrazinamide, Ethambutol |
+Zenthera is a clinical-grade diagnostic platform that accelerates antibiotic resistance prediction through high-fidelity genomic intelligence and deterministic gene scanning. It ingests patient DNA sequences (`.fasta` files) and utilizes a dual-layer machine learning pipeline to recommend precise antibiotic treatments.
 
 ---
 
-## 🚀 Performance Benchmarks
+## ✨ Key Features
 
-The machine learning models are evaluated using 5-fold cross-validation on real-world clinical isolates:
+### 💻 Frontend (React + Tailwind + Framer Motion)
+*   **Intelligence Hub (Analytics):** Fully interactive, responsive dashboard featuring custom canvas-rendered Donut and Bar charts, time-range filtering, and live pathogen detection tracking. Designed with premium glassmorphic UI and animated interactions.
+*   **Patient Management:** Comprehensive patient record directory with real-time search, CRUD capabilities, and high-fidelity "Details Modals" linking patients directly to their AI-generated ML reports and recommended treatment courses.
+*   **Genomic File Dropzone:** Intuitive drag-and-drop interface for uploading raw genomic sequence data, complete with a terminal-style simulation loader.
+*   **Adaptive Navigation:** Context-aware routing that dynamically switches between public landing page flows and secure dashboard variants.
 
-| Metric | Random Forest (Ensemble) | Logistic Regression |
-|--------|--------------------------|---------------------|
-| **Accuracy** | ~0.88 – 0.94 | ~0.82 – 0.89 |
-| **ROC-AUC** | ~0.92 – 0.97 | ~0.87 – 0.93 |
-| **F1-Score** | ~0.89 – 0.95 | ~0.83 – 0.90 |
+### ⚙️ Backend (Node.js + Express + MongoDB)
+*   **Robust Authentication:** Secure JWT-based authentication pipeline utilizing `bcryptjs` for password hashing and custom middleware for Role-Based Access Control (RBAC) supporting `admin`, `doctor`, and `researcher` roles.
+*   **Relational Data Modeling:** Mongoose schemas designed to intrinsically link `User` profiles with their respective `Analysis` reports and patient metadata.
+*   **Scalable API Architecture:** Modular routing structure prepared to handle heavy data ingress from the ML pipeline and serve it rapidly to the frontend dashboards.
 
-*Note: Performance varies by antibiotic. Ciprofloxacin and Meropenem typically show the highest accuracy due to robust training data.*
+### 🧠 AI Model Pipeline (Python + Scikit-Learn)
+*   **Dual-Layer Deterministic Engine:** Combines a primary CARD database gene scanner with a secondary MutationScanner to ensure high-confidence AMR predictions.
+*   **Broad Spectrum Analysis:** Capable of predicting susceptibility and resistance profiles across 35 distinct antibiotics.
+*   **API Integration:** Exposed via a Flask REST API to seamlessly communicate feature vectors and prediction confidence scores to the Node.js backend.
 
 ---
 
-## 🛠️ Project Structure
+## 🛠️ Tech Stack
 
+| Domain | Technologies |
+| :--- | :--- |
+| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, Framer Motion, Lucide React, HTML5 Canvas |
+| **Backend** | Node.js, Express.js, MongoDB, Mongoose, JSON Web Tokens (JWT) |
+| **AI/ML Engine** | Python, Flask, Scikit-Learn, Pandas, NumPy |
+| **Deployment** | Vercel (Frontend & Serverless API wrapping) |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+Ensure you have the following installed on your local development machine:
+*   [Node.js](https://nodejs.org/) (v18+ recommended)
+*   [Python](https://www.python.org/) (3.10+ recommended)
+*   [MongoDB](https://www.mongodb.com/) (Local instance or Atlas URI)
+
+### 1. Clone the Repository
 ```bash
+git clone https://github.com/shreyshNair/Zenthera.git
+cd Zenthera
+```
+
+### 2. Setup the Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+*The frontend will be available at `http://localhost:5173`*
+
+### 3. Setup the Backend
+Open a new terminal window:
+```bash
+cd backend
+npm install
+```
+
+Create a `.env` file in the `backend/` directory:
+```env
+PORT=4000
+MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/zenthera
+JWT_SECRET=your_super_secret_jwt_key
+```
+
+Start the backend server:
+```bash
+npm run dev
+```
+*The backend API will run on `http://localhost:4000`*
+
+### 4. Setup the AI Engine (If applicable)
+Open a third terminal window:
+```bash
+cd aiModel
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+python app.py
+```
+*The Flask prediction server typically runs on `http://localhost:5000`*
+
+---
+
+## 📂 Project Structure
+
+```text
 Zenthera/
-├── frontend/               # React + Vite + Tailwind CSS (Premium UI)
+├── frontend/                 # React frontend application
 │   ├── src/
-│   │   ├── components/     # High-fidelity dashboard & 3D visualizations
-│   │   ├── pages/          # Landing, Analysis Dashboard, HowItWorks
-│   │   └── App.tsx         # Routing and global state management
-│   └── index.html
-├── aiModel/                # Python + Flask + ML Backend
-│   ├── models/             # joblib-compressed ML models (managed by Git LFS)
-│   ├── data/               # Genomic metadata & CARD/Mutation indexes
-│   ├── app.py              # Flask REST API Server
-│   ├── predict.py          # Core Hybrid Inference Pipeline
-│   ├── card_scanner.py     # Deterministic Gene Matcher
-│   └── mutation_scanner.py # Clinical Mutation Scanner
-├── .gitignore              # Robust exclusion for data and cache
-└── README.md               # Main project documentation
+│   │   ├── components/       # Reusable UI components (Analytics, Patients, Navbar)
+│   │   ├── App.tsx           # Main application routing
+│   │   ├── index.css         # Global Tailwind directives & custom animations
+│   │   └── main.tsx          # React DOM entry point
+│   ├── package.json
+│   └── vite.config.ts
+├── backend/                  # Node.js Express API
+│   ├── models/               # Mongoose schemas (User.js, Analysis.js)
+│   ├── middleware/           # Custom Express middleware (auth.js)
+│   ├── routes/               # API endpoint definitions
+│   ├── server.js             # Main backend entry point
+│   └── package.json
+├── aiModel/                  # Python Machine Learning Pipeline
+│   ├── model.pkl             # Trained Random Forest model
+│   ├── app.py                # Flask API serving predictions
+│   └── requirements.txt
+├── api/                      # Serverless deployment wrappers (e.g., index.py for Vercel)
+└── README.md
 ```
 
 ---
 
-## ⚡ Quick Start
+## 🎨 Design Philosophy
 
-### 1. Backend (Inference Engine)
-1. Navigate to `aiModel/`.
-2. Install dependencies: `pip install -r requirements.txt`.
-3. Ensure large models are pulled via Git LFS: `git lfs pull`.
-4. Start the server: `python app.py`.
-   *   API Endpoint: `POST /api/predict` (Accepts multipart/form-data with `fasta` file).
-
-### 2. Frontend (Clinical UI)
-1. Navigate to `frontend/`.
-2. Install dependencies: `npm install`.
-3. Start development server: `npm run dev`.
-4. Access at `http://localhost:5173`.
+Zenthera follows a "Dark-First" premium aesthetic. 
+*   **Typography:** We utilize `Playfair Display` (Italic) for bold, authoritative headers, paired with `Inter` for highly legible, data-dense interface elements.
+*   **Color Palette:** Built on deep, sleek dark modes accented by a vibrant `brand-orange` (`#F15A24`) to draw attention to critical interactions and alerts.
+*   **Interactivity:** Heavy utilization of `framer-motion` for micro-interactions, ensuring the app feels alive, responsive, and satisfying to navigate.
 
 ---
 
-## 📦 Data Source & Ethics
+## 🔒 Security & Data Compliance
 
-Zenthera leverages the **BV-BRC (Bacterial and Viral Bioinformatics Resource Center)** public API for high-quality, lab-confirmed AMR phenotypes. We prioritize data with "Laboratory Method" and "Phenotype" evidence to ensure clinical relevance.
-
----
-
-## 🛡️ Clinical Disclaimer
-
-Zenthera is a diagnostic support tool designed for educational and research purposes. All resistance predictions must be validated by standard Laboratory Antimicrobial Susceptibility Testing (AST) before clinical implementation.
+All genomic sequences uploaded to Zenthera are processed within isolated sandboxes. We adhere to strict data-minimization principles; sequences are not persisted post-analysis unless explicitly requested for longitudinal research collaboration. Authentication is strictly enforced on all clinical dashboard routes.
 
 ---
-© 2026 Zenthera Diagnostics. Built for Advanced Clinical Genomics.
-
+*Developed with precision for the future of diagnostics.*
