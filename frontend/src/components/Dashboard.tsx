@@ -149,7 +149,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-bg-primary selection:bg-brand-orange selection:text-white transition-colors duration-500">
-      <Navbar />
+      <Navbar variant="dashboard" />
 
       <main className="max-w-7xl mx-auto px-6 md:px-12 pt-32 pb-24">
         {/* Tab Switcher - Now more subtle and integrated */}
