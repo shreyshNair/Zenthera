@@ -28,8 +28,14 @@ aiModel/logs/
 aiModel/scratch/
 aiModel/data/*
 !aiModel/data/mutation_index.json
+!aiModel/data/card/
+aiModel/data/card/*
+!aiModel/data/card/gene_index.json
 aiModel/sample_genomes/*
 !aiModel/sample_genomes/.gitkeep
+aiModel/Dockerfile
+test_model.py
+start_zenthera.bat
 
 # OS
 .DS_Store

@@ -107,7 +107,7 @@ def cross_validate_model(name: str, model, X, y, genome_ids, cv: int = 5) -> dic
     Run GROUP k-fold CV — genome_id is the group key.
     No genome appears in both a train fold and a validation fold.
     """
-    log.info(f"\n{'─'*50}")
+    log.info(f"\n{'-'*50}")
     log.info(f"Cross-validating {name} (k={cv}, genome-level groups) ...")
     gkf = GroupKFold(n_splits=cv)
 
@@ -143,7 +143,7 @@ def train_and_save(name: str, model, X, y, save_path: str) -> None:
 
     joblib.dump(model, save_path, compress=3)
     size_mb = os.path.getsize(save_path) / (1024 ** 2)
-    log.info(f"  Saved → {save_path}  ({size_mb:.1f} MB)")
+    log.info(f"  Saved -> {save_path}  ({size_mb:.1f} MB)")
 
 
 def write_report(
@@ -163,18 +163,18 @@ def write_report(
         f"  Classes        : {list(le.classes_)}",
         "",
         "  Random Forest (5-fold CV)",
-        "  " + "─" * 40,
+        "  " + "-" * 40,
     ]
     for metric, vals in rf_cv.items():
-        lines.append(f"    {metric:<22} {vals['mean']:.4f} ± {vals['std']:.4f}")
+        lines.append(f"    {metric:<22} {vals['mean']:.4f} +/- {vals['std']:.4f}")
 
     lines += [
         "",
         "  Logistic Regression (5-fold CV)",
-        "  " + "─" * 40,
+        "  " + "-" * 40,
     ]
     for metric, vals in lr_cv.items():
-        lines.append(f"    {metric:<22} {vals['mean']:.4f} ± {vals['std']:.4f}")
+        lines.append(f"    {metric:<22} {vals['mean']:.4f} +/- {vals['std']:.4f}")
 
     lines += ["", "=" * 60]
     report = "\n".join(lines)
@@ -183,7 +183,7 @@ def write_report(
         f.write(report)
 
     print("\n" + report)
-    log.info(f"\nReport saved → {REPORT_FILE}")
+    log.info(f"\nReport saved -> {REPORT_FILE}")
 
 
 # ── Main ───────────────────────────────────────────────────────────────────────
@@ -211,7 +211,7 @@ def main() -> None:
     rf.fit(X, y)
     
     joblib.dump(rf, RF_MODEL_FILE, compress=3)
-    log.info(f"  Saved Calibrated RF → {RF_MODEL_FILE}")
+    log.info(f"  Saved Calibrated RF -> {RF_MODEL_FILE}")
 
     # ── Logistic Regression ────────────────────────────────────────────────────
     lr = LogisticRegression(**LR_PARAMS, class_weight="balanced")

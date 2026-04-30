@@ -133,7 +133,18 @@ def per_antibiotic_auc(model, X_test, y_test, df_test, le) -> str:
 
 def rf_feature_importance(rf, n_top: int = 20) -> str:
     """Top-N feature importances from the Random Forest."""
-    importances = rf.feature_importances_
+    # Handle CalibratedClassifierCV if cv='prefit'
+    if hasattr(rf, "estimator"):
+        importances = rf.estimator.feature_importances_
+    elif hasattr(rf, "calibrated_classifiers_"):
+        # Average importances from all CV folds if not 'prefit'
+        importances = np.mean([clf.estimator.feature_importances_ for clf in rf.calibrated_classifiers_], axis=0)
+    else:
+        importances = getattr(rf, "feature_importances_", None)
+
+    if importances is None:
+        return "\n  Feature importances not available for this model type."
+
     idx = np.argsort(importances)[::-1][:n_top]
     lines = [f"\n  Random Forest - Top {n_top} Feature Importances:", "  " + "-" * 40]
     for rank, i in enumerate(idx, 1):

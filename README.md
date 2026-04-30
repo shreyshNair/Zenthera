@@ -1,100 +1,93 @@
-# Zenthera AI 🧬
+# Zenthera 🧬
 
-**Genomic Intelligence Platform for Predicting Antimicrobial Resistance (AMR) with DNA.**
+**AI-Powered Genomic Intelligence Platform for Antimicrobial Resistance (AMR) Diagnostics.**
 
-![Zenthera Banner](https://img.shields.io/badge/Status-Active_Development-emerald.svg)
-![React](https://img.shields.io/badge/Frontend-React_18_%7C_Vite-61DAFB?logo=react&logoColor=black)
-![Node](https://img.shields.io/badge/Backend-Node.js_%7C_Express-339933?logo=nodedotjs&logoColor=white)
-![Python](https://img.shields.io/badge/AI_Engine-Python_%7C_Flask-3776AB?logo=python&logoColor=white)
-![MongoDB](https://img.shields.io/badge/Database-MongoDB-47A248?logo=mongodb&logoColor=white)
+![Zenthera Banner](https://img.shields.io/badge/Status-Operational-emerald.svg?style=for-the-badge)
+![Accuracy](https://img.shields.io/badge/Model_Accuracy-87.7%25-blue.svg?style=for-the-badge)
+![Antibiotics](https://img.shields.io/badge/Antibiotics_Supported-35-orange.svg?style=for-the-badge)
 
-Zenthera is a clinical-grade diagnostic platform that accelerates antibiotic resistance prediction through high-fidelity genomic intelligence and deterministic gene scanning. It ingests patient DNA sequences (`.fasta` files) and utilizes a dual-layer machine learning pipeline to recommend precise antibiotic treatments.
+Zenthera is a clinical-grade diagnostic platform that predicts antibiotic resistance through high-fidelity genomic intelligence. It ingests raw genomic sequences (`.fasta`) and utilizes a state-of-the-art **Triple-Layer Predictive Pipeline** to generate precise, medically actionable susceptibility reports.
 
 ---
 
-## ✨ Key Features
+## 🧠 Triple-Layer Diagnostic Engine
 
-### 💻 Frontend (React + Tailwind + Framer Motion)
-*   **Intelligence Hub (Analytics):** Fully interactive, responsive dashboard featuring custom canvas-rendered Donut and Bar charts, time-range filtering, and live pathogen detection tracking. Designed with premium glassmorphic UI and animated interactions.
-*   **Patient Management:** Comprehensive patient record directory with real-time search, CRUD capabilities, and high-fidelity "Details Modals" linking patients directly to their AI-generated ML reports and recommended treatment courses.
-*   **Genomic File Dropzone:** Intuitive drag-and-drop interface for uploading raw genomic sequence data, complete with a terminal-style simulation loader.
-*   **Adaptive Navigation:** Context-aware routing that dynamically switches between public landing page flows and secure dashboard variants.
+Zenthera doesn't just guess; it analyzes DNA evidence at three distinct levels of resolution:
 
-### ⚙️ Backend (Node.js + Express + MongoDB)
-*   **Robust Authentication:** Secure JWT-based authentication pipeline utilizing `bcryptjs` for password hashing and custom middleware for Role-Based Access Control (RBAC) supporting `admin`, `doctor`, and `researcher` roles.
-*   **Relational Data Modeling:** Mongoose schemas designed to intrinsically link `User` profiles with their respective `Analysis` reports and patient metadata.
-*   **Scalable API Architecture:** Modular routing structure prepared to handle heavy data ingress from the ML pipeline and serve it rapidly to the frontend dashboards.
+1.  **🧬 Layer 1: CARD Gene Scanner (Deterministic)**
+    *   Scans for 100% matches against the **Comprehensive Antibiotic Resistance Database (CARD)**.
+    *   Identifies known resistance genes (e.g., `blaTEM-1`, `ndm-1`).
+    *   Provides high-confidence `[GENE]` evidence badges.
 
-### 🧠 AI Model Pipeline (Python + Scikit-Learn)
-*   **Dual-Layer Deterministic Engine:** Combines a primary CARD database gene scanner with a secondary MutationScanner to ensure high-confidence AMR predictions.
-*   **Broad Spectrum Analysis:** Capable of predicting susceptibility and resistance profiles across 35 distinct antibiotics.
-*   **API Integration:** Exposed via a Flask REST API to seamlessly communicate feature vectors and prediction confidence scores to the Node.js backend.
+2.  **🔬 Layer 2: Mutation Scanner (High-Precision SNP)**
+    *   Detects specific point mutations (SNPs) in critical regions like `gyrA` or `rpoB`.
+    *   Uses a curated index of 6 high-confidence resistance-conferring mutations.
+    *   Provides `[MUTATION]` evidence badges for molecular-level diagnostics.
+
+3.  **🤖 Layer 3: Zenthera AI (Machine Learning)**
+    *   **Calibrated Random Forest** model trained on **149,000+** genomic records from BV-BRC.
+    *   Analyzes DNA k-mer signatures to predict susceptibility even when no known genes are found.
+    *   Outputs confidence scores with 87.7% accuracy across 35 antibiotics.
 
 ---
 
-## 🛠️ Tech Stack
+## 📊 Model Performance Facts
+
+| Metric | Value |
+| :--- | :--- |
+| **Training Samples** | 148,261 unique AMR records |
+| **Genome Bank** | 26,183 processed bacterial genomes |
+| **Accuracy (Holdout)** | 87.72% |
+| **ROC-AUC Score** | 0.9379 |
+| **Antibiotic Panel** | 35 drugs (Beta-lactams, Aminoglycosides, Fluoroquinolones, etc.) |
+
+---
+
+## 🛠️ Technology Stack
 
 | Domain | Technologies |
 | :--- | :--- |
 | **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, Framer Motion, Lucide React, HTML5 Canvas |
 | **Backend** | Node.js, Express.js, MongoDB, Mongoose, JSON Web Tokens (JWT) |
-| **AI/ML Engine** | Python, Flask, Scikit-Learn, Pandas, NumPy |
-| **Deployment** | Vercel (Frontend & Serverless API wrapping) |
+| **AI/ML Engine** | Python 3.12, Scikit-Learn, Joblib, Pandas, NumPy, Flask |
+| **Bioinformatics** | DNA K-mer Vectorization, TF-IDF Normalization, CARD Bio-Scanning |
 
 ---
 
 ## 🚀 Getting Started
 
-### Prerequisites
-Ensure you have the following installed on your local development machine:
-*   [Node.js](https://nodejs.org/) (v18+ recommended)
-*   [Python](https://www.python.org/) (3.10+ recommended)
-*   [MongoDB](https://www.mongodb.com/) (Local instance or Atlas URI)
-
-### 1. Clone the Repository
+### 1. Repository Setup
 ```bash
 git clone https://github.com/shreyshNair/Zenthera.git
 cd Zenthera
 ```
 
-### 2. Setup the Frontend
+### 2. Frontend Launch (Vite)
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-*The frontend will be available at `http://localhost:5173`*
+*Access at `http://localhost:5173`*
 
-### 3. Setup the Backend
-Open a new terminal window:
+### 3. Backend Launch (Node)
 ```bash
 cd backend
 npm install
-```
-
-Create a `.env` file in the `backend/` directory:
-```env
-PORT=4000
-MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/zenthera
-JWT_SECRET=your_super_secret_jwt_key
-```
-
-Start the backend server:
-```bash
+# Configure .env with MONGO_URI and JWT_SECRET
 npm run dev
 ```
-*The backend API will run on `http://localhost:4000`*
+*Access at `http://localhost:4000`*
 
-### 4. Setup the AI Engine (If applicable)
-Open a third terminal window:
+### 4. AI Engine Launch (Flask)
 ```bash
 cd aiModel
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Install dependencies
 pip install -r requirements.txt
+# Start the prediction server
 python app.py
 ```
-*The Flask prediction server typically runs on `http://localhost:5000`*
+*Access at `http://localhost:5000`*
 
 ---
 
@@ -102,25 +95,22 @@ python app.py
 
 ```text
 Zenthera/
-├── frontend/                 # React frontend application
-│   ├── src/
-│   │   ├── components/       # Reusable UI components (Analytics, Patients, Navbar)
-│   │   ├── App.tsx           # Main application routing
-│   │   ├── index.css         # Global Tailwind directives & custom animations
-│   │   └── main.tsx          # React DOM entry point
-│   ├── package.json
-│   └── vite.config.ts
-├── backend/                  # Node.js Express API
-│   ├── models/               # Mongoose schemas (User.js, Analysis.js)
-│   ├── middleware/           # Custom Express middleware (auth.js)
-│   ├── routes/               # API endpoint definitions
-│   ├── server.js             # Main backend entry point
-│   └── package.json
-├── aiModel/                  # Python Machine Learning Pipeline
-│   ├── model.pkl             # Trained Random Forest model
-│   ├── app.py                # Flask API serving predictions
-│   └── requirements.txt
-├── api/                      # Serverless deployment wrappers (e.g., index.py for Vercel)
+├── aiModel/                  # Python ML Pipeline & AI Engine
+│   ├── models/               # Trained artifacts (RF, Vectorizer, LabelEncoder)
+│   ├── data/                 # Genomic indexes & raw AMR datasets
+│   ├── logs/                 # Training & Evaluation reports
+│   ├── step1_fetch.py        # Data ingestion from BV-BRC
+│   ├── step2_preprocess.py   # DNA Vectorization & Cleaning
+│   ├── step3_train.py        # Model training & Calibration
+│   ├── step4_evaluate.py     # Genome-level holdout validation
+│   └── app.py                # Production Flask API
+├── backend/                  # Node.js Clinical API
+│   ├── models/               # Mongoose schemas (User, Patient, Analysis)
+│   ├── routes/               # API controllers
+│   └── server.js             # Main entry point
+├── frontend/                 # React Intelligence Hub
+│   ├── src/components/       # Premium UI (Analytics, Lab, Patients)
+│   └── src/pages/            # View logic
 └── README.md
 ```
 
@@ -128,16 +118,10 @@ Zenthera/
 
 ## 🎨 Design Philosophy
 
-Zenthera follows a "Dark-First" premium aesthetic. 
-*   **Typography:** We utilize `Playfair Display` (Italic) for bold, authoritative headers, paired with `Inter` for highly legible, data-dense interface elements.
-*   **Color Palette:** Built on deep, sleek dark modes accented by a vibrant `brand-orange` (`#F15A24`) to draw attention to critical interactions and alerts.
-*   **Interactivity:** Heavy utilization of `framer-motion` for micro-interactions, ensuring the app feels alive, responsive, and satisfying to navigate.
+Zenthera follows a **"Dark-First"** premium aesthetic designed for high-stakes medical environments.
+*   **Typography:** Authority headers in `Playfair Display`, data interfaces in `Inter`.
+*   **Color Palette:** Deep Obsidian backgrounds with vibrant `Emerald` (Susceptible) and `Rose` (Resistant) status indicators.
+*   **Aesthetics:** Heavy use of glassmorphism, custom-rendered canvas charts, and silky Framer Motion transitions.
 
 ---
-
-## 🔒 Security & Data Compliance
-
-All genomic sequences uploaded to Zenthera are processed within isolated sandboxes. We adhere to strict data-minimization principles; sequences are not persisted post-analysis unless explicitly requested for longitudinal research collaboration. Authentication is strictly enforced on all clinical dashboard routes.
-
----
-*Developed with precision for the future of diagnostics.*
+*Developed with precision for the future of antimicrobial diagnostics.*
